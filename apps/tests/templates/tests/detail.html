@@ -45,7 +45,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header">{% ui_text 'tests.stable_eval' %}</div>
             <div class="table-responsive">
-                <table class="table mb-0">
+                <table class="table mb-0 detail-data-table">
                     <thead>
                         <tr>
                             <th>{% ui_text 'common.parameter' %}</th>
@@ -62,26 +62,26 @@
                     <tbody>
                     {% for row in evaluation_rows %}
                         <tr>
-                            <td>{{ row.parameter_name }}</td>
-                            <td>{{ row.unit }}</td>
-                            <td>{{ row.stats.min_value|floatformat:2|default:"-" }}</td>
-                            <td>{{ row.avg_value|floatformat:2|default:"-" }}</td>
-                            <td>{{ row.stats.max_value|floatformat:2|default:"-" }}</td>
-                            <td>
+                            <td class="detail-col-parameter">{{ row.parameter_name }}</td>
+                            <td class="detail-col-unit">{{ row.unit }}</td>
+                            <td class="detail-col-value">{{ row.stats.min_value|floatformat:2|default:"-" }}</td>
+                            <td class="detail-col-value">{{ row.avg_value|floatformat:2|default:"-" }}</td>
+                            <td class="detail-col-value">{{ row.stats.max_value|floatformat:2|default:"-" }}</td>
+                            <td class="detail-col-value">
                                 {% if row.min_enabled %}
                                     {{ row.min_limit|floatformat:2 }}
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="detail-col-value">
                                 {% if row.max_enabled %}
                                     {{ row.max_limit|floatformat:2 }}
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="detail-col-status">
                                 {% if row.passed is None %}
                                     {% if row.has_limit %}
                                         <span class="status-pill status-pill-na">{% ui_text 'common.invalid' %}</span>
@@ -96,7 +96,7 @@
                                     {% endif %}
                                 {% endif %}
                             </td>
-                            <td>{{ row.display_message }}</td>
+                            <td class="detail-col-message">{{ row.display_message }}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -107,7 +107,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header">{{ section.title }}</div>
             <div class="table-responsive">
-                <table class="table mb-0">
+                <table class="table mb-0 detail-data-table">
                     <thead>
                         <tr>
                             <th>{% ui_text 'common.parameter' %}</th>
@@ -124,26 +124,26 @@
                     <tbody>
                     {% for row in section.rows %}
                         <tr>
-                            <td>{{ row.parameter_name }}</td>
-                            <td>{{ row.unit }}</td>
-                            <td>{{ row.stats.min_value|floatformat:2|default:"-" }}</td>
-                            <td>{{ row.stats.avg_value|floatformat:2|default:"-" }}</td>
-                            <td>{{ row.stats.max_value|floatformat:2|default:"-" }}</td>
-                            <td>
+                            <td class="detail-col-parameter">{{ row.parameter_name }}</td>
+                            <td class="detail-col-unit">{{ row.unit }}</td>
+                            <td class="detail-col-value">{{ row.stats.min_value|floatformat:2|default:"-" }}</td>
+                            <td class="detail-col-value">{{ row.stats.avg_value|floatformat:2|default:"-" }}</td>
+                            <td class="detail-col-value">{{ row.stats.max_value|floatformat:2|default:"-" }}</td>
+                            <td class="detail-col-value">
                                 {% if row.min_enabled %}
                                     {{ row.min_limit|floatformat:2 }}
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="detail-col-value">
                                 {% if row.max_enabled %}
                                     {{ row.max_limit|floatformat:2 }}
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="detail-col-status">
                                 {% if row.passed is None %}
                                     {% if row.has_limit %}
                                         <span class="status-pill status-pill-na">{% ui_text 'common.invalid' %}</span>
@@ -158,7 +158,7 @@
                                     {% endif %}
                                 {% endif %}
                             </td>
-                            <td>{{ row.display_message }}</td>
+                            <td class="detail-col-message">{{ row.display_message }}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -169,7 +169,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header">{% ui_text 'tests.limit_excursions' %}</div>
             <div class="table-responsive">
-                <table class="table mb-0">
+                <table class="table mb-0 limit-excursion-table">
                     <thead>
                         <tr>
                             <th>{% ui_text 'common.parameter' %}</th>
@@ -184,13 +184,13 @@
                     <tbody>
                         {% for item in limit_excursions %}
                             <tr>
-                                <td>{{ item.parameter_name }}</td>
-                                <td>{{ item.phase_name }}</td>
-                                <td>{{ item.elapsed_seconds|floatformat:2 }} sn</td>
-                                <td>{{ item.sample_value|floatformat:2 }} {{ item.unit }}</td>
-                                <td>{{ item.limit_type }}</td>
-                                <td>{{ item.limit_value|floatformat:2 }} {{ item.unit }}</td>
-                                <td>{{ item.message }}</td>
+                                <td class="detail-col-parameter">{{ item.parameter_name }}</td>
+                                <td class="detail-col-phase">{{ item.phase_name }}</td>
+                                <td class="detail-col-value">{{ item.elapsed_seconds|floatformat:2 }} sn</td>
+                                <td class="detail-col-value">{{ item.sample_value|floatformat:2 }} {{ item.unit }}</td>
+                                <td class="detail-col-phase">{{ item.limit_type }}</td>
+                                <td class="detail-col-value">{{ item.limit_value|floatformat:2 }} {{ item.unit }}</td>
+                                <td class="detail-col-message">{{ item.message }}</td>
                             </tr>
                         {% empty %}
                             <tr>

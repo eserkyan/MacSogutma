@@ -5,6 +5,11 @@
     --brand-blue: #2f56a3;
     --brand-blue-dark: #244483;
     --brand-blue-soft: #eaf1fb;
+    --floating-card-height: 0px;
+}
+
+html {
+    overflow-x: hidden;
 }
 
 body {
@@ -12,6 +17,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 }
 
 .app-navbar {
@@ -110,6 +116,7 @@ body {
 .app-main {
     scroll-margin-top: 96px;
     flex: 1 0 auto;
+    padding-bottom: calc(2rem + var(--floating-card-height));
 }
 
 .global-active-test-card {
@@ -124,6 +131,7 @@ body {
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
     backdrop-filter: blur(14px);
     overflow: hidden;
+    --floating-card-height: 190px;
 }
 
 .global-active-test-card-header {
@@ -147,6 +155,13 @@ body {
     color: #0f172a;
     line-height: 1.35;
     word-break: break-word;
+}
+
+#global-active-test-recipe {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .global-active-test-meta {
@@ -280,6 +295,12 @@ pre {
 }
 
 .active-test-chart {
+    display: block;
+    width: 100% !important;
+    height: 416px !important;
+}
+
+.detail-test-chart {
     display: block;
     width: 100% !important;
     height: 416px !important;
@@ -422,6 +443,7 @@ pre {
 
 .dashboard-table-responsive {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .dashboard-parameter-cell {
@@ -528,7 +550,7 @@ pre {
 }
 
 .settings-page .card-body {
-    overflow-x: visible;
+    overflow-x: auto;
 }
 
 .settings-page .form-control,
@@ -625,6 +647,45 @@ pre {
     margin-top: 0;
 }
 
+.detail-data-table,
+.limit-excursion-table {
+    table-layout: auto;
+}
+
+.detail-data-table th,
+.detail-data-table td,
+.limit-excursion-table th,
+.limit-excursion-table td {
+    vertical-align: middle;
+}
+
+.detail-col-parameter {
+    min-width: 180px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.detail-col-unit,
+.detail-col-status,
+.detail-col-phase {
+    min-width: 96px;
+    white-space: nowrap;
+}
+
+.detail-col-value {
+    min-width: 104px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.detail-col-message {
+    min-width: 240px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
 .limit-input {
     min-width: 110px;
 }
@@ -644,6 +705,12 @@ pre {
         margin-top: 0.75rem;
     }
 
+    .app-navbar .nav-link {
+        display: block;
+        width: 100%;
+        text-align: left;
+    }
+
     .metric-card {
         min-height: 96px;
     }
@@ -661,9 +728,22 @@ pre {
     .app-partner-badge {
         justify-content: center;
     }
+
+    .app-navbar-side form {
+        width: 100%;
+    }
+
+    .app-navbar-side .lang-select,
+    .app-navbar-side .app-navbar-lang-btn {
+        width: 100%;
+    }
 }
 
 @media (max-width: 767.98px) {
+    :root {
+        --floating-card-height: 170px;
+    }
+
     body {
         background: linear-gradient(180deg, #eef4fb, #f9fbfd);
     }
@@ -695,17 +775,33 @@ pre {
     }
 
     .json-display {
-        min-height: 220px;
-        max-height: 320px;
+        min-height: 180px;
+        max-height: 260px;
         font-size: 0.85rem;
     }
 
     .active-chart-body {
-        min-height: 360px;
+        min-height: 300px;
     }
 
     .active-test-chart {
-        height: 332px !important;
+        height: 272px !important;
+    }
+
+    .detail-test-chart {
+        height: 320px !important;
+    }
+
+    .detail-data-table,
+    .limit-excursion-table {
+        min-width: 980px;
+    }
+
+    .detail-data-table th,
+    .detail-data-table td,
+    .limit-excursion-table th,
+    .limit-excursion-table td {
+        font-size: 0.9rem;
     }
 
     .form-grid-row {
@@ -730,6 +826,7 @@ pre {
 
     .settings-tag-table {
         table-layout: auto;
+        min-width: 960px;
     }
 
     .settings-tag-table th,
@@ -749,15 +846,15 @@ pre {
 
     .dashboard-live-table {
         table-layout: auto;
-        min-width: 620px;
+        min-width: 540px;
     }
 
     .dashboard-parameter-cell {
-        min-width: 220px;
+        min-width: 190px;
     }
 
     .dashboard-value-col {
-        width: 170px;
+        width: 150px;
     }
 
     .dashboard-value-text {
@@ -811,11 +908,113 @@ pre {
         bottom: 0.75rem;
         width: auto;
         border-radius: 0.9rem;
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
     }
 
     .global-active-test-card-header,
     .global-active-test-card-body {
         padding-left: 0.85rem;
         padding-right: 0.85rem;
+    }
+
+    .global-active-test-card-header {
+        padding-top: 0.7rem;
+        padding-bottom: 0.7rem;
+    }
+
+    .global-active-test-card-body {
+        padding-top: 0.75rem;
+        padding-bottom: calc(0.8rem + env(safe-area-inset-bottom));
+    }
+
+    .global-active-test-meta {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        font-size: 0.84rem;
+    }
+
+    .app-main {
+        padding-bottom: calc(1.5rem + var(--floating-card-height) + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 575.98px) {
+    :root {
+        --floating-card-height: 160px;
+    }
+
+    .container-xxl {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+    }
+
+    .metric-card {
+        min-height: 88px;
+        padding: 0.85rem;
+    }
+
+    .metric-card span {
+        font-size: 0.82rem;
+    }
+
+    .metric-card strong {
+        font-size: 1.02rem;
+    }
+
+    .card-header,
+    .card-body {
+        padding-left: 0.9rem;
+        padding-right: 0.9rem;
+    }
+
+    .table-responsive {
+        margin-left: -0.2rem;
+        margin-right: -0.2rem;
+    }
+
+    .history-col-actions {
+        min-width: 180px;
+    }
+
+    .history-actions {
+        gap: 0.35rem;
+    }
+
+    .json-display {
+        min-height: 160px;
+        max-height: 220px;
+    }
+
+    .active-chart-body {
+        min-height: 270px;
+    }
+
+    .active-test-chart {
+        height: 240px !important;
+    }
+
+    .detail-test-chart {
+        height: 340px !important;
+    }
+
+    .detail-data-table,
+    .limit-excursion-table {
+        min-width: 920px;
+    }
+
+    .detail-col-parameter {
+        min-width: 170px;
+    }
+
+    .detail-col-message {
+        min-width: 220px;
+    }
+
+    .global-active-test-card-header {
+        font-size: 0.9rem;
+    }
+
+    .global-active-test-line {
+        font-size: 0.95rem;
     }
 }
