@@ -1,0 +1,14 @@
+DATA_BLOCK "MB_SERVER_DB2"
+{InstructionName := 'MB_SERVER';
+ LibVersion := '3.1';
+ S7_Optimized_Access := 'TRUE' }
+AUTHOR : SIMATIC
+FAMILY : MBUS_TCP
+NAME : MB_SRVR
+VERSION : 2.0
+NON_RETAIN
+MB_SERVER
+
+BEGIN
+
+END_DATA_BLOCK

@@ -1,0 +1,84 @@
+FUNCTION "FC_MB_Server_Side" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+
+BEGIN
+	// 0. Runtime tick / unix zaman uretimi
+	"FB_HVAC_Runtime_DB"(
+	                     Enable := TRUE,
+	                     TimeSyncEdge := "FB_HVAC_ModbusServer_DB".TimeSyncRequestEdge,
+	                     TimeSyncUnix := "DB_HVAC_Command".Data.TimeSyncUnix,
+	                     Runtime := "DB_HVAC_Runtime".Data
+	);
+	
+	// 1. Sinyal kaynağı
+	"FB_HVAC_SignalSource_DB"(
+	                          UseSimulation := "DB_HVAC_IO".Data.UseSimulation,
+	                          Cmd := "DB_HVAC_Command".Data,
+	                          CycleSeconds := 0.1,
+	                          AI_Circuit1_HP_raw := "IW54_C1_HP",
+	                          AI_Circuit1_LP_raw := "IW56_C1_LP",
+	                          AI_Circuit2_HP_raw := "IW58_C2_HP",
+	                          AI_Circuit2_LP_raw := "IW60_C2_LP",
+	                          AI_AirFlow_raw := "IW62_Air_Flow_Sensor",
+	                          AI_InletAirHumidity_raw := "IW64_Inlet_Air_Humidty_Sensor",
+	                          AI_OutletAirHumidity_raw := "IW66_Outlet_Air_Humidty_Sensor",
+	                          AI_C1_DischargeTemp_raw := "IW70_C1_DischargeLine_Temp",
+	                          AI_C2_DischargeTemp_raw := "IW72_C2_DischargeLine_Temp",
+	                          AI_C1_SuctionTemp_raw := "IW74_C1_SuctionLine_Temp",
+	                          AI_C2_SuctionTemp_raw := "IW76_C2_SuctionLine_Temp",
+	                          AI_CondenserWaterInletTemp_raw := "IW78_Condencer_Water_Inlet_Temp",
+	                          AI_CondenserWaterOutletTemp_raw := "IW80_Condencer_Water_Outlet_Temp",
+	                          AI_AirInletTemp_raw := "IW82_Air_Inlet_Temp",
+	                          AI_AirOutletTemp_raw := "IW84_Air_Outlet_Temp",
+	                          DI_Comp1_Rng := "I0_0_Comp1_Rng",
+	                          DI_Comp2_Rng := "I0_1_Comp2_Rng",
+	                          DI_Alarm := "Plc_Alarm",
+	                          DI_Ready := "Plc_Ready",
+	                          IoData := "DB_HVAC_IO".Data
+	);
+	
+	// 1.1 HVAC saha cikis komutlari
+	"DB_HVAC_IO".Data.Circuit1_RunCommand := "DB_HVAC_Command".Data.TestActive AND
+	(("DB_HVAC_Command".Data.CircuitSelect = 1) OR ("DB_HVAC_Command".Data.CircuitSelect = 3));
+	"DB_HVAC_IO".Data.Circuit2_RunCommand := "DB_HVAC_Command".Data.TestActive AND
+	(("DB_HVAC_Command".Data.CircuitSelect = 2) OR ("DB_HVAC_Command".Data.CircuitSelect = 3));
+	
+	"Q0_0_Circuit1_Run" := "DB_HVAC_IO".Data.Circuit1_RunCommand;
+	"Q0_1_Circuit2_Run" := "DB_HVAC_IO".Data.Circuit2_RunCommand;
+	
+	// 2. 500 ms örnekleme anında live/status/history oluştur
+	"FB_HVAC_ModbusServer_DB"(
+	                          Cmd := "DB_HVAC_Command".Data,
+	                          IoData := "DB_HVAC_IO".Data,
+	                          SampleTrigger500ms := "DB_HVAC_Runtime".Data.Tick500ms,
+	                          UnixTimeNow := "DB_HVAC_Runtime".Data.UnixNow,
+	                          Status := "DB_HVAC_Status".Data,
+	                          LiveRecord := "DB_HVAC_Live".Data,
+	                          History := "DB_HVAC_History".Buffer
+	);
+	
+	// 3. Command/Status/Live/History -> Holding Register map
+	"FB_HVAC_ModbusRegisterMap_DB"(
+	                               CmdSourceFromModbus := TRUE,
+	                               IoData := "DB_HVAC_IO".Data,
+	                               Cmd := "DB_HVAC_Command".Data,
+	                               Status := "DB_HVAC_Status".Data,
+	                               LiveRecord := "DB_HVAC_Live".Data,
+	                               History := "DB_HVAC_History".Buffer,
+	                               Holding := "DB_HVAC_Modbus".Data.Holding
+	);
+	
+	// 4. Modbus TCP server
+	"FB_HVAC_MB_ServerTcp_DB"(
+	                          Disconnect := FALSE,
+	                          ConnectID := 1,
+	                          "Port" := 502,
+	                          Holding := "DB_HVAC_Modbus".Data.Holding,
+	                          NDR => "DB_HVAC_Modbus".Data.NDR,
+	                          DR => "DB_HVAC_Modbus".Data.DR,
+	                          Error => "DB_HVAC_Modbus".Data.Error,
+	                          Status => "DB_HVAC_Modbus".Data.Status
+	);
+	
+END_FUNCTION

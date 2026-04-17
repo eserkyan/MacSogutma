@@ -1,0 +1,8 @@
+DATA_BLOCK "DB_HVAC_Runtime"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   STRUCT
+      Data : "UDT_HVAC_Runtime";
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

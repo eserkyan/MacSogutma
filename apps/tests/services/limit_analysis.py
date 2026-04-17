@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from apps.core.constants import CircuitSelect, TestPhase
 from apps.core.services.tag_registry import TagRegistryService
+from apps.plc.services.parser import validity_bit_is_set
 from apps.recipes.services.phase_limits import has_active_limit, phase_limit
 from apps.tests.models import TestRecord, TestSample
 
@@ -103,7 +104,7 @@ class LimitAnalysisService:
         bit_index = self.registry.get_validity_tag_map().get(parameter_code)
         if bit_index is None:
             return True
-        return bool(int(sample.validity_word1) & (1 << bit_index))
+        return validity_bit_is_set(sample.validity_word1, sample.validity_word2, bit_index)
 
     def _parameter_codes(self, circuit: CircuitSelect) -> list[str]:
         codes = set(self.registry.get_parameter_codes_for_scope("shared"))

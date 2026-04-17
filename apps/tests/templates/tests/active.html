@@ -60,6 +60,7 @@
                 <p class="mb-1">{{ test_record.company.name }}</p>
                 <p class="mb-1">{{ test_record.product_model.model_name }}</p>
                 <p class="mb-1">{{ test_record.recipe_name_snapshot }}</p>
+                <p class="mb-1">{% ui_text 'common.status' %}: <span id="active-test-status-label">{{ test_record.status }}</span></p>
                 <p class="mb-1">{% ui_text 'tests.commanded_circuit' %}: <span id="active-test-commanded-circuit" data-current-circuit="{{ test_record.selected_circuit }}">{{ commanded_circuit_label }}</span></p>
                 <p class="mb-0">{% ui_text 'tests.phase' %}: <span id="active-test-phase">{{ test_record.current_phase.name }}</span></p>
             </div>

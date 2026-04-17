@@ -112,6 +112,56 @@ body {
     flex: 1 0 auto;
 }
 
+.global-active-test-card {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    width: min(320px, calc(100vw - 2rem));
+    z-index: 1040;
+    border: 1px solid rgba(47, 86, 163, 0.18);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(14px);
+    overflow: hidden;
+}
+
+.global-active-test-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, #f4f8fd, #eaf1fb);
+    border-bottom: 1px solid #dce5f1;
+    font-weight: 700;
+    color: #183153;
+}
+
+.global-active-test-card-body {
+    padding: 0.95rem 1rem 1rem;
+}
+
+.global-active-test-line {
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.global-active-test-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    color: #334155;
+}
+
+.global-active-test-separator {
+    color: #94a3b8;
+}
+
 .app-footer {
     margin-top: auto;
     background: linear-gradient(135deg, #13233f, #244483 52%, #2f56a3);
@@ -226,13 +276,13 @@ pre {
 
 .active-chart-body {
     position: relative;
-    min-height: 280px;
+    min-height: 450px;
 }
 
 .active-test-chart {
     display: block;
     width: 100% !important;
-    height: 260px !important;
+    height: 416px !important;
 }
 
 .dashboard-active-test-panel {
@@ -650,6 +700,14 @@ pre {
         font-size: 0.85rem;
     }
 
+    .active-chart-body {
+        min-height: 360px;
+    }
+
+    .active-test-chart {
+        height: 332px !important;
+    }
+
     .form-grid-row {
         grid-template-columns: 1fr;
         gap: 0.55rem;
@@ -745,5 +803,19 @@ pre {
     .app-footer-note {
         white-space: normal;
         flex-wrap: wrap;
+    }
+
+    .global-active-test-card {
+        right: 0.75rem;
+        left: 0.75rem;
+        bottom: 0.75rem;
+        width: auto;
+        border-radius: 0.9rem;
+    }
+
+    .global-active-test-card-header,
+    .global-active-test-card-body {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
     }
 }

@@ -1,0 +1,61 @@
+FUNCTION_BLOCK "FB_HVAC_Runtime"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   VAR_INPUT 
+      Enable : Bool;
+      TimeSyncEdge : Bool;
+      TimeSyncUnix : DWord;
+   END_VAR
+
+   VAR_IN_OUT 
+      Runtime : "UDT_HVAC_Runtime";
+   END_VAR
+
+   VAR 
+      Timer500ms : TON;
+      Timer1s : TON;
+      PrevQ500ms : Bool;
+      PrevQ1s : Bool;
+   END_VAR
+
+
+BEGIN
+	
+	#Runtime.Tick500ms := FALSE;
+	#Runtime.Tick1s := FALSE;
+	
+	IF NOT #Enable THEN
+	    #PrevQ500ms := FALSE;
+	    #PrevQ1s := FALSE;
+	    #Timer500ms(IN := FALSE,
+	               PT := T#500ms);
+	    #Timer1s(IN := FALSE,
+	             PT := T#1s);
+	    RETURN;
+	END_IF;
+	
+	IF #TimeSyncEdge THEN
+	    #Runtime.UnixNow := #TimeSyncUnix;
+	    #Runtime.LastUnixSet := #TimeSyncUnix;
+	END_IF;
+	
+	#Timer500ms(IN := NOT #Timer500ms.Q,
+	           PT := T#500ms);
+	#Timer1s(IN := NOT #Timer1s.Q,
+	         PT := T#1s);
+	
+	#Runtime.Tick500ms := #Timer500ms.Q AND NOT #PrevQ500ms;
+	#Runtime.Tick1s := #Timer1s.Q AND NOT #PrevQ1s;
+	
+	IF #Runtime.Tick500ms THEN
+	    #Runtime.TickCounter := #Runtime.TickCounter + 1;
+	END_IF;
+	
+	IF #Runtime.Tick1s THEN
+	    #Runtime.UnixNow := #Runtime.UnixNow + DWORD#1;
+	END_IF;
+	
+	#PrevQ500ms := #Timer500ms.Q;
+	#PrevQ1s := #Timer1s.Q;
+	
+END_FUNCTION_BLOCK

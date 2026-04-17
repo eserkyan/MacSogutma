@@ -30,10 +30,10 @@ class PlcSchemaConfig(SingletonModel, TimeStampedModel):
     status_address = models.PositiveIntegerField(default=0)
     status_count = models.PositiveIntegerField(default=12)
     live_record_address = models.PositiveIntegerField(default=100)
-    live_record_count = models.PositiveIntegerField(default=34)
+    live_record_count = models.PositiveIntegerField(default=48)
     history_base_address = models.PositiveIntegerField(default=300)
     history_record_words = models.PositiveIntegerField(default=34)
-    history_capacity = models.PositiveIntegerField(default=300)
+    history_capacity = models.PositiveIntegerField(default=100)
     cmd_circuit_select = models.PositiveIntegerField(default=1000)
     cmd_start_request = models.PositiveIntegerField(default=1001)
     cmd_stop_request = models.PositiveIntegerField(default=1002)
@@ -120,3 +120,12 @@ class TagConfig(TimeStampedModel):
     def modbus_reference(self) -> str:
         prefix = "4" if self.register_type == self.RegisterType.HOLDING else "3"
         return f"{prefix}{int(self.modbus_address):05d}"
+
+    @property
+    def validity_reference(self) -> str:
+        if self.validity_bit is None:
+            return "-"
+        bit_index = int(self.validity_bit)
+        if bit_index < 16:
+            return f"Word 1 / Bit {bit_index}"
+        return f"Word 2 / Bit {bit_index - 16}"

@@ -83,7 +83,11 @@
                             </td>
                             <td>
                                 {% if row.passed is None %}
-                                    <span class="status-pill status-pill-na">{% ui_text 'tests.status_na' %}</span>
+                                    {% if row.has_limit %}
+                                        <span class="status-pill status-pill-na">{% ui_text 'common.invalid' %}</span>
+                                    {% else %}
+                                        <span class="status-pill status-pill-na">{% ui_text 'tests.status_na' %}</span>
+                                    {% endif %}
                                 {% else %}
                                     {% if row.passed %}
                                         <span class="status-pill status-pill-pass">{% ui_text 'tests.status_pass' %}</span>
@@ -141,7 +145,11 @@
                             </td>
                             <td>
                                 {% if row.passed is None %}
-                                    <span class="status-pill status-pill-na">{% ui_text 'tests.status_na' %}</span>
+                                    {% if row.has_limit %}
+                                        <span class="status-pill status-pill-na">{% ui_text 'common.invalid' %}</span>
+                                    {% else %}
+                                        <span class="status-pill status-pill-na">{% ui_text 'tests.status_na' %}</span>
+                                    {% endif %}
                                 {% else %}
                                     {% if row.passed %}
                                         <span class="status-pill status-pill-pass">{% ui_text 'tests.status_pass' %}</span>

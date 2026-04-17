@@ -1,0 +1,36 @@
+FUNCTION "FC_HVAC_AnalogExamples" : Void
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   VAR_IN_OUT 
+      IoData : "UDT_HVAC_IO";
+   END_VAR
+
+   VAR_TEMP 
+      RawAI : Int;
+   END_VAR
+
+
+BEGIN
+	
+	// // Ornek 1: Circuit 1 HP transmitter, %IW54
+	// // AI raw degerini kendi kart tipinize gore olceklendirin.
+	// #RawAI := IW54;
+	// #IoData.Circuit1_HP_bar := (INT_TO_REAL(#RawAI) / 27648.0) * 40.0;
+	
+	// // Ornek 2: Circuit 1 LP transmitter, %IW56
+	// #RawAI := IW56;
+	// #IoData.Circuit1_LP_bar := (INT_TO_REAL(#RawAI) / 27648.0) * 16.0;
+	
+	// // Ornek 3: C1 discharge line temp transmitter, %IW70
+	// #RawAI := IW70;
+	// #IoData.Temp1_C := (INT_TO_REAL(#RawAI) / 27648.0) * 100.0;
+	
+	// // Ornek 4: Inlet air humidity transmitter, %IW64
+	// #RawAI := IW64;
+	// #IoData.Humidity_RH := (INT_TO_REAL(#RawAI) / 27648.0) * 100.0;
+	
+	// // Ornek 5: Air flow sensor, %IW62
+	// #RawAI := IW62;
+	// #IoData.AirVelocity_ms := (INT_TO_REAL(#RawAI) / 27648.0) * 10.0;
+	
+END_FUNCTION

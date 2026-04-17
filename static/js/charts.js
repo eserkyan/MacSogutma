@@ -59,6 +59,92 @@ function circuitLabel(value, language = "tr") {
     return labels[value]?.[language] || String(value ?? "-");
 }
 
+function phaseLabelShort(phase, language = "tr") {
+    const normalized = Number(phase);
+    const trMap = { 0: "Bekleme", 1: "Start", 2: "Stable", 3: "Stop", 4: "Manuel", 5: "Abort" };
+    const enMap = { 0: "Idle", 1: "Start", 2: "Stable", 3: "Stop", 4: "Manual", 5: "Abort" };
+    return (language === "tr" ? trMap : enMap)[normalized] || String(phase ?? "-");
+}
+
+function resolveUiState(payload) {
+    const state = payload?.ui_state || {};
+    const active = state.active_test || payload?.active_test_summary || {};
+    return {
+        hasActiveTest: Boolean(state.has_active_test ?? payload?.has_active_test),
+        id: active.id ?? payload?.active_test_id ?? null,
+        testNo: active.test_no ?? payload?.active_test_no ?? "",
+        status: active.status ?? "",
+        selectedCircuit: resolveStableCircuitValue(active.selected_circuit, 0),
+        currentPhase: Number(active.current_phase ?? payload?.active_test_meta?.current_phase ?? 0),
+        companyName: active.company_name ?? "",
+        modelName: active.model_name ?? "",
+        recipeName: active.recipe_name ?? "",
+    };
+}
+
+function applySharedUiState(payload) {
+    const language = document.documentElement.lang || "tr";
+    const state = resolveUiState(payload);
+
+    const globalCard = document.getElementById("global-active-test-card");
+    const globalBadge = document.getElementById("global-active-test-badge");
+    const globalNo = document.getElementById("global-active-test-no");
+    const globalRecipe = document.getElementById("global-active-test-recipe");
+    const globalCircuit = document.getElementById("global-active-test-circuit");
+    const globalPhase = document.getElementById("global-active-test-phase");
+    if (globalCard && globalBadge && globalNo && globalRecipe && globalCircuit && globalPhase) {
+        if (state.hasActiveTest) {
+            globalCard.classList.remove("d-none");
+            globalBadge.textContent = localizeTestStatus(state.status, language);
+            globalBadge.className = "badge";
+            if (state.status === "COMPLETED_PASS") {
+                globalBadge.classList.add("text-bg-success");
+            } else if (["COMPLETED_FAIL", "ABORTED", "FAILED_TO_START"].includes(state.status)) {
+                globalBadge.classList.add("text-bg-danger");
+            } else {
+                globalBadge.classList.add("text-bg-primary");
+            }
+            globalNo.textContent = state.testNo || "-";
+            globalRecipe.textContent = state.recipeName || "-";
+            globalCircuit.textContent = circuitLabel(state.selectedCircuit, language);
+            globalPhase.textContent = phaseLabelShort(state.currentPhase, language);
+        } else {
+            globalCard.classList.add("d-none");
+            globalBadge.textContent = language === "tr" ? "Aktif Test Yok" : "No Active Test";
+            globalBadge.className = "badge text-bg-secondary";
+            globalNo.textContent = "-";
+            globalRecipe.textContent = "-";
+            globalCircuit.textContent = "-";
+            globalPhase.textContent = "-";
+        }
+    }
+
+    const activeTestCommandedCircuitNode = document.getElementById("active-test-commanded-circuit");
+    if (activeTestCommandedCircuitNode) {
+        activeTestCommandedCircuitNode.dataset.currentCircuit = String(state.selectedCircuit);
+        activeTestCommandedCircuitNode.textContent = circuitLabel(state.selectedCircuit, language);
+    }
+    setText("active-test-status-label", localizeTestStatus(state.status, language));
+    setText("active-test-phase", phaseLabelShort(state.currentPhase, language));
+    setText("active-test-phase-top", phaseLabelShort(state.currentPhase, language));
+
+    const metricCommandedCircuit = document.getElementById("metric-commanded-circuit");
+    if (metricCommandedCircuit) {
+        metricCommandedCircuit.dataset.currentCircuit = String(state.selectedCircuit);
+        metricCommandedCircuit.textContent = circuitLabel(state.selectedCircuit, language);
+    }
+
+    const dashboardActiveTestCircuit = document.getElementById("dashboard-active-test-commanded-circuit");
+    if (dashboardActiveTestCircuit) {
+        dashboardActiveTestCircuit.dataset.currentCircuit = String(state.selectedCircuit);
+        dashboardActiveTestCircuit.textContent = `${language === "tr" ? "Komutlanan Devre" : "Commanded Circuit"}: ${circuitLabel(state.selectedCircuit, language)}`;
+    }
+    const dashboardActiveTestStatus = document.getElementById("dashboard-active-test-status");
+    if (dashboardActiveTestStatus) {
+        dashboardActiveTestStatus.textContent = `${language === "tr" ? "Durum" : "Status"}: ${localizeTestStatus(state.status, language)}`;
+    }
+}
+
 function resolveStableCircuitValue(incomingValue, fallbackValue = 0) {
     const parsedIncoming = Number(incomingValue ?? 0);
     if ([1, 2, 3].includes(parsedIncoming)) {
@@ -825,6 +911,7 @@ function scheduleActiveTestRedirect(activeConfig) {
 
 function applyDashboardUpdate(payload) {
     const dashboardConfig = document.getElementById("dashboard-live-config");
+    applySharedUiState(payload);
     if (!dashboardConfig) {
         return;
     }
@@ -835,15 +922,8 @@ function applyDashboardUpdate(payload) {
     setText("metric-fault", boolText(payload.plc_fault, language, "EVET", "HAYIR", "YES", "NO"));
     setText("metric-connection", boolText(payload.connection_ok, language, "AKTIF", "PASIF", "ACTIVE", "DOWN"));
     setText("metric-stale", boolText(payload.stale_data, language, "EVET", "HAYIR", "YES", "NO"));
-    const summaryCircuit = resolveStableCircuitValue(
-        payload.active_test_summary?.selected_circuit,
-        document.getElementById("metric-commanded-circuit")?.dataset.currentCircuit,
-    );
-    const metricCommandedCircuit = document.getElementById("metric-commanded-circuit");
-    if (metricCommandedCircuit) {
-        metricCommandedCircuit.dataset.currentCircuit = String(summaryCircuit);
-    }
-    setText("metric-commanded-circuit", circuitLabel(summaryCircuit, language));
+    const uiState = resolveUiState(payload);
+    const summaryCircuit = uiState.selectedCircuit;
 
     const activeTestEmpty = document.getElementById("dashboard-active-test-empty");
     const activeTestNo = document.getElementById("dashboard-active-test-no");
@@ -858,13 +938,10 @@ function applyDashboardUpdate(payload) {
             activeTestNo.textContent = payload.active_test_no || "";
             activeTestCompany.textContent = `${activeTestSummary.company_name || ""} / ${activeTestSummary.model_name || ""}`;
             activeTestRecipe.textContent = activeTestSummary.recipe_name || "";
-            const stableCircuit = resolveStableCircuitValue(
-                activeTestSummary.selected_circuit,
-                activeTestCommandedCircuit.dataset.currentCircuit,
-            );
+            const stableCircuit = uiState.selectedCircuit;
             activeTestCommandedCircuit.dataset.currentCircuit = String(stableCircuit);
             activeTestCommandedCircuit.textContent = `${language === "tr" ? "Komutlanan Devre" : "Commanded Circuit"}: ${circuitLabel(stableCircuit, language)}`;
-            activeTestStatus.textContent = `${language === "tr" ? "Durum" : "Status"}: ${localizeTestStatus(activeTestSummary.status, language)}`;
+            activeTestStatus.textContent = `${language === "tr" ? "Durum" : "Status"}: ${localizeTestStatus(uiState.status, language)}`;
             activeTestNo.classList.remove("d-none");
             activeTestCompany.classList.remove("d-none");
             activeTestRecipe.classList.remove("d-none");
@@ -1005,6 +1082,7 @@ function applyDashboardUpdate(payload) {
 
 function applyActiveTestUpdate(payload) {
     const activeConfig = document.getElementById("active-test-live-config");
+    applySharedUiState(payload);
     if (!activeConfig) {
         return;
     }
@@ -1030,21 +1108,10 @@ function applyActiveTestUpdate(payload) {
     setText("active-test-ready", String(payload.plc_ready ?? ""));
     setText("active-test-stale", String(payload.stale_data ?? ""));
     setText("active-test-last-seen", String(payload.last_seen_at ?? ""));
-    const selectedCircuit = resolveStableCircuitValue(
-        payload.active_test_summary?.selected_circuit,
-        activeConfig.dataset.selectedCircuit,
-    );
+    const uiState = resolveUiState(payload);
+    const selectedCircuit = resolveStableCircuitValue(uiState.selectedCircuit, activeConfig.dataset.selectedCircuit);
     if ([1, 2, 3].includes(selectedCircuit)) {
         activeConfig.dataset.selectedCircuit = String(selectedCircuit);
-    }
-    const activeTestCommandedCircuitNode = document.getElementById("active-test-commanded-circuit");
-    if (activeTestCommandedCircuitNode) {
-        const stableCircuit = resolveStableCircuitValue(
-            activeConfig.dataset.selectedCircuit,
-            activeTestCommandedCircuitNode.dataset.currentCircuit,
-        );
-        activeTestCommandedCircuitNode.dataset.currentCircuit = String(stableCircuit);
-        activeTestCommandedCircuitNode.textContent = circuitLabel(stableCircuit, language);
     }
     setText("active-test-comp1-rng", boolText(Boolean(payload.live_record?.status_flags?.comp1_rng), language, "ON", "OFF", "ON", "OFF"));
     setText("active-test-comp2-rng", boolText(Boolean(payload.live_record?.status_flags?.comp2_rng), language, "ON", "OFF", "ON", "OFF"));
@@ -1110,6 +1177,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     renderSparklineCharts();
     startActiveTestCountdown();
-    bindLiveSocket("dashboard-live-config");
-    bindLiveSocket("active-test-live-config");
+    bindLiveSocket("global-live-config");
 });

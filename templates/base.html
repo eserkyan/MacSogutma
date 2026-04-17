@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<div id="global-live-config" data-ws-path="/ws/dashboard/"></div>
 <nav class="navbar navbar-expand-lg app-navbar shadow-sm sticky-top">
     <div class="container-xxl">
         <a class="navbar-brand app-navbar-brand" href="{% url 'dashboard:index' %}">
@@ -55,6 +56,32 @@
     {% endif %}
     {% block content %}{% endblock %}
 </main>
+<div id="global-active-test-card" class="global-active-test-card{% if not active_test_context %} d-none{% endif %}">
+    <div class="global-active-test-card-header">
+        <span>{% ui_text 'nav.active_test' %}</span>
+        <span class="badge text-bg-primary" id="global-active-test-badge">
+            {% if active_test_context %}{{ active_test_context.status }}{% else %}-{% endif %}
+        </span>
+    </div>
+    <div class="global-active-test-card-body">
+        <div class="global-active-test-line" id="global-active-test-no">
+            {% if active_test_context %}{{ active_test_context.test_no }}{% else %}-{% endif %}
+        </div>
+        <div class="global-active-test-line small text-muted" id="global-active-test-recipe">
+            {% if active_test_context %}{{ active_test_context.recipe_name_snapshot }}{% else %}-{% endif %}
+        </div>
+        <div class="global-active-test-meta">
+            <span id="global-active-test-circuit">
+                {% if active_test_context %}{{ active_test_context.selected_circuit }}{% else %}-{% endif %}
+            </span>
+            <span class="global-active-test-separator">|</span>
+            <span id="global-active-test-phase">-</span>
+        </div>
+        <a id="global-active-test-link" href="{% url 'tests:active' %}" class="btn btn-primary btn-sm w-100 mt-3">
+            {% ui_text 'common.open' %}
+        </a>
+    </div>
+</div>
 <footer class="app-footer mt-4">
     <div class="container-xxl">
         <div class="app-footer-inner">

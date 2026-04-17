@@ -1,0 +1,8 @@
+DATA_BLOCK "DB_HVAC_History"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   STRUCT
+      Buffer : Array[0..99] of "UDT_HVAC_Record";
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

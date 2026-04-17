@@ -186,7 +186,7 @@
                                     <div class="small text-muted">{{ tag.get_data_type_display }} / {{ tag.word_order }}</div>
                                 </td>
                                 <td class="settings-tag-meta-cell">
-                                    <div class="small fw-semibold">Validity: {{ tag.validity_bit|default:"-" }}</div>
+                                    <div class="small fw-semibold">Validity: {{ tag.validity_reference }}</div>
                                     <div class="small text-muted">{% ui_text 'settings.scale_label' %}: {{ tag.scale }}</div>
                                 </td>
                                 <td class="settings-tag-meta-cell">{{ tag.get_circuit_scope_display }}</td>
@@ -281,11 +281,14 @@
         };
 
         const groupDefaults = {
-            pressure: { tr: "Basinc Grafikleri", en: "Pressure Charts" },
-            temperature: { tr: "Sicaklik Grafikleri", en: "Temperature Charts" },
-            ambient: { tr: "Ortam Grafikleri", en: "Ambient Charts" },
-            comp1_electrical: { tr: "Kompresor 1 Elektriksel", en: "Compressor 1 Electrical" },
-            comp2_electrical: { tr: "Kompresor 2 Elektriksel", en: "Compressor 2 Electrical" },
+            pressure: { tr: "Basinc Sensorleri", en: "Pressure Sensors" },
+            process_temperature: { tr: "Proses Hat Sicakliklari", en: "Process Line Temperatures" },
+            air_humidity: { tr: "Hava Nem Sensorleri", en: "Air Humidity Sensors" },
+            air_flow: { tr: "Hava Akis Sensorleri", en: "Air Flow Sensors" },
+            water_temperature: { tr: "Kondenser Su Sicakliklari", en: "Condenser Water Temperatures" },
+            air_temperature: { tr: "Hava Sicaklik Sensorleri", en: "Air Temperature Sensors" },
+            comp1_electrical: { tr: "Devre 1 Elektriksel", en: "Circuit 1 Electrical" },
+            comp2_electrical: { tr: "Devre 2 Elektriksel", en: "Circuit 2 Electrical" },
         };
 
         const updateGroupTitles = (force = false) => {

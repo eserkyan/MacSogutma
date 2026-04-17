@@ -1,0 +1,9 @@
+DATA_BLOCK "DB_HVAC_Status"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   STRUCT
+      Data : "UDT_HVAC_Status";
+   END_STRUCT;
+BEGIN
+   Data.Buf_BufferSize := 100;
+END_DATA_BLOCK

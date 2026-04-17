@@ -6,6 +6,7 @@ from decimal import Decimal
 from apps.core.constants import CircuitSelect, EvaluationPhase, TestPhase, TestStatus
 from apps.core.services.tag_registry import TagRegistryService
 from apps.recipes.services.phase_limits import has_active_limit, phase_limit
+from apps.plc.services.parser import validity_bit_is_set
 from apps.tests.models import TestEvaluationResult, TestRecord, TestSample
 
 
@@ -51,7 +52,7 @@ class TestEvaluationService:
                     passed=passed,
                     message=message,
                 )
-                if not passed:
+                if passed is False:
                     failures.append(f"{evaluation_phase.value}:{parameter_code}: {message}")
 
         if failures:
@@ -108,7 +109,7 @@ class TestEvaluationService:
         bit_index = self.registry.get_validity_tag_map().get(parameter_code)
         if bit_index is None:
             return True
-        return bool(int(sample.validity_word1) & (1 << bit_index))
+        return validity_bit_is_set(sample.validity_word1, sample.validity_word2, bit_index)
 
     @staticmethod
     def _average(values: list[Decimal]) -> Decimal | None:
@@ -121,10 +122,10 @@ class TestEvaluationService:
         limit: dict[str, object],
         avg_value: Decimal | None,
         phase: EvaluationPhase,
-    ) -> tuple[bool, str]:
+    ) -> tuple[bool | None, str]:
         phase_name = phase.value.title()
         if avg_value is None:
-            return False, f"No valid {phase_name} samples were available."
+            return None, f"No valid {phase_name} samples were available."
         if limit.get("min_enabled") and limit.get("min_value") is not None:
             if avg_value < Decimal(str(limit["min_value"])):
                 return False, f"Average {avg_value} is below minimum limit {limit['min_value']}."

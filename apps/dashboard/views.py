@@ -13,6 +13,9 @@ from apps.tests.models import TestRecord
 
 class DashboardView(TemplateView):
     template_name = "dashboard/index.html"
+    DASHBOARD_HIDDEN_WHEN_REPLACED: dict[str, str] = {
+        "109": "127",
+    }
 
     STATUS_FLAG_LABELS = {
         "test_active": {"tr": "Test Aktif", "en": "Test Active"},
@@ -28,6 +31,7 @@ class DashboardView(TemplateView):
         live_record = runtime.live_record_json or {}
         values = live_record.get("values", {})
         validity = live_record.get("validity", {})
+        validity_details = live_record.get("validity_details", {})
         status_flags = live_record.get("status_flags", {})
         context["runtime"] = runtime
         language = self.request.session.get("ui_language", "tr")
@@ -43,7 +47,7 @@ class DashboardView(TemplateView):
         live_history = get_live_history()
         trend_series_map = self._build_row_trend_series(context["active_test"], live_history, registry)
         context["recent_events"] = PlcEventLog.objects.select_related("test_record")[:8]
-        context["dashboard_sections"] = self._build_sections(values, validity, language, trend_series_map, registry)
+        context["dashboard_sections"] = self._build_sections(values, validity, validity_details, language, trend_series_map, registry)
         context["live_status_flags"] = [
             (self.STATUS_FLAG_LABELS.get(str(key), {}).get(language, str(key)), value)
             for key, value in status_flags.items()
@@ -87,6 +91,7 @@ class DashboardView(TemplateView):
         self,
         values: dict[str, object],
         validity: dict[str, bool],
+        validity_details: dict[str, dict[str, object]],
         language: str,
         trend_series_map: dict[str, dict[str, object]],
         registry: TagRegistryService,
@@ -97,6 +102,9 @@ class DashboardView(TemplateView):
             rows = []
             for dataset in group["datasets"]:
                 key = str(dataset["key"])
+                replacement_key = self.DASHBOARD_HIDDEN_WHEN_REPLACED.get(key)
+                if replacement_key and replacement_key in values:
+                    continue
                 meta = parameter_definitions.get(key, {"label": key, "unit": ""})
                 rows.append(
                     {
@@ -105,12 +113,14 @@ class DashboardView(TemplateView):
                         "unit": meta["unit"],
                         "value": values.get(key),
                         "valid": validity.get(key),
+                        "validity_reference": (validity_details.get(key) or {}).get("reference", "-"),
                         "trend_labels_json": json.dumps(trend_series_map.get(key, {}).get("labels", [])),
                         "trend_series_json": json.dumps(trend_series_map.get(key, {}).get("series", [])),
                         "trend_color": trend_series_map.get(key, {}).get("color", "#2563eb"),
                     }
                 )
-            sections.append({"title": self._group_title(group, language), "rows": rows})
+            if rows:
+                sections.append({"title": self._group_title(group, language), "rows": rows})
         return sections
 
     def _build_error_message(self, runtime: PlcRuntimeState, live_record: dict[str, object], language: str) -> str:
@@ -190,15 +200,7 @@ class DashboardView(TemplateView):
 
     @staticmethod
     def _group_title(group: dict[str, object], language: str) -> str:
-        slug = str(group.get("chart_id", "")).replace("Chart", "")
-        mapping = {
-            "pressure": get_text("dashboard.pressure", language),
-            "temperature": get_text("dashboard.temperature", language),
-            "ambient": get_text("dashboard.ambient", language),
-            "comp1Electrical": get_text("dashboard.comp1", language),
-            "comp2Electrical": get_text("dashboard.comp2", language),
-        }
-        return mapping.get(slug, str(group.get("title", slug)))
+        return str(group.get("title", ""))
 
     @staticmethod
     def _circuit_label(value: int, language: str) -> str:

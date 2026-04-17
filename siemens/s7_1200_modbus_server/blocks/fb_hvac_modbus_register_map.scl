@@ -1,0 +1,148 @@
+FUNCTION_BLOCK "FB_HVAC_ModbusRegisterMap"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   VAR_INPUT 
+      CmdSourceFromModbus : Bool;
+      IoData : "UDT_HVAC_IO";
+   END_VAR
+
+   VAR_IN_OUT 
+      Cmd : "UDT_HVAC_Command";
+      Status : "UDT_HVAC_Status";
+      LiveRecord : "UDT_HVAC_Record";
+      History : Array[0..99] of "UDT_HVAC_Record";
+      Holding : "UDT_HVAC_HoldingRegisters";
+   END_VAR
+
+   VAR_TEMP 
+      HistoryBase : Int;
+      i : Int;
+      BaseIndex : Int;
+   END_VAR
+
+
+BEGIN
+	
+	#HistoryBase := 300;
+	
+	// Python -> PLC command area
+	IF #CmdSourceFromModbus THEN
+	    #Cmd.CircuitSelect := WORD_TO_UINT(#Holding.HoldingRegister[1000]);
+	    #Cmd.StartRequest := #Holding.HoldingRegister[1001] <> W#16#0000;
+	    #Cmd.StopRequest := #Holding.HoldingRegister[1002] <> W#16#0000;
+	    #Cmd.AbortRequest := #Holding.HoldingRegister[1003] <> W#16#0000;
+	    #Cmd.TestPhase := WORD_TO_UINT(#Holding.HoldingRegister[1004]);
+	    #Cmd.TestActive := #Holding.HoldingRegister[1005] <> W#16#0000;
+	    #Cmd.TimeSyncRequest := #Holding.HoldingRegister[1010] <> W#16#0000;
+	    #Cmd.TimeSyncUnix := SHL(IN := WORD_TO_DWORD(#Holding.HoldingRegister[1011]), N := 16)
+	    OR WORD_TO_DWORD(#Holding.HoldingRegister[1012]);
+	END_IF;
+	
+	// PLC -> Python status block
+	#Holding.HoldingRegister[0] := BOOL_TO_WORD(#Status.PlcReady);
+	#Holding.HoldingRegister[1] := #Status.Reserved0;
+	#Holding.HoldingRegister[2] := BOOL_TO_WORD(#Status.PlcFault);
+	#Holding.HoldingRegister[3] := #Status.Reserved1;
+	#Holding.HoldingRegister[4] := UINT_TO_WORD(#Status.Buf_WriteIndex);
+	#Holding.HoldingRegister[5] := UINT_TO_WORD(#Status.Buf_RecordCount);
+	#Holding.HoldingRegister[6] := UINT_TO_WORD(#Status.Buf_BufferSize);
+	#Holding.HoldingRegister[7] := DWORD_TO_WORD(SHR(IN := #Status.Buf_LastSequenceNo, N := 16));
+	#Holding.HoldingRegister[8] := DWORD_TO_WORD(#Status.Buf_LastSequenceNo AND DWORD#16#0000FFFF);
+	#Holding.HoldingRegister[9] := BOOL_TO_WORD(#Status.TimeSyncDone);
+	#Holding.HoldingRegister[10] := DWORD_TO_WORD(SHR(IN := #Status.PlcCurrentUnix, N := 16));
+	#Holding.HoldingRegister[11] := DWORD_TO_WORD(#Status.PlcCurrentUnix AND DWORD#16#0000FFFF);
+	
+	// Live record block at 100..133
+	#Holding.HoldingRegister[100] := DWORD_TO_WORD(SHR(IN := #LiveRecord.SequenceNo, N := 16));
+	#Holding.HoldingRegister[101] := DWORD_TO_WORD(#LiveRecord.SequenceNo AND DWORD#16#0000FFFF);
+	#Holding.HoldingRegister[102] := DWORD_TO_WORD(SHR(IN := #LiveRecord.TimestampUnix, N := 16));
+	#Holding.HoldingRegister[103] := DWORD_TO_WORD(#LiveRecord.TimestampUnix AND DWORD#16#0000FFFF);
+	#Holding.HoldingRegister[104] := UINT_TO_WORD(#LiveRecord.TestPhase);
+	#Holding.HoldingRegister[105] := #LiveRecord.StatusWord;
+	#Holding.HoldingRegister[106] := #LiveRecord.ValidityWord1;
+	#Holding.HoldingRegister[107] := #LiveRecord.ValidityWord2;
+	#Holding.HoldingRegister[108] := INT_TO_WORD(#LiveRecord.Circuit1_HP_bar_x10);
+	#Holding.HoldingRegister[109] := INT_TO_WORD(#LiveRecord.Circuit1_LP_bar_x10);
+	#Holding.HoldingRegister[110] := INT_TO_WORD(#LiveRecord.Circuit2_HP_bar_x10);
+	#Holding.HoldingRegister[111] := INT_TO_WORD(#LiveRecord.Circuit2_LP_bar_x10);
+	#Holding.HoldingRegister[112] := INT_TO_WORD(#LiveRecord.Temp1_C_x10);
+	#Holding.HoldingRegister[113] := INT_TO_WORD(#LiveRecord.Temp2_C_x10);
+	#Holding.HoldingRegister[114] := INT_TO_WORD(#LiveRecord.Temp3_C_x10);
+	#Holding.HoldingRegister[115] := INT_TO_WORD(#LiveRecord.Temp4_C_x10);
+	#Holding.HoldingRegister[116] := INT_TO_WORD(#LiveRecord.Humidity_RH_x10);
+	#Holding.HoldingRegister[117] := INT_TO_WORD(#LiveRecord.AirVelocity_ms_x10);
+	#Holding.HoldingRegister[118] := INT_TO_WORD(#LiveRecord.Comp1_Voltage_V_x10);
+	#Holding.HoldingRegister[119] := INT_TO_WORD(#LiveRecord.Comp1_Current_A_x100);
+	#Holding.HoldingRegister[120] := INT_TO_WORD(#LiveRecord.Comp1_ActivePower_kW_x10);
+	#Holding.HoldingRegister[121] := INT_TO_WORD(#LiveRecord.Comp1_ReactivePower_kVAr_x10);
+	#Holding.HoldingRegister[122] := INT_TO_WORD(#LiveRecord.Comp1_ApparentPower_kVA_x10);
+	#Holding.HoldingRegister[123] := INT_TO_WORD(#LiveRecord.Comp1_PowerFactor_x1000);
+	#Holding.HoldingRegister[124] := INT_TO_WORD(#LiveRecord.Comp1_Frequency_Hz_x10);
+	#Holding.HoldingRegister[125] := INT_TO_WORD(#LiveRecord.Comp1_Energy_kWh_x10);
+	#Holding.HoldingRegister[126] := INT_TO_WORD(#LiveRecord.Comp2_Voltage_V_x10);
+	#Holding.HoldingRegister[127] := INT_TO_WORD(#LiveRecord.Comp2_Current_A_x100);
+	#Holding.HoldingRegister[128] := INT_TO_WORD(#LiveRecord.Comp2_ActivePower_kW_x10);
+	#Holding.HoldingRegister[129] := INT_TO_WORD(#LiveRecord.Comp2_ReactivePower_kVAr_x10);
+	#Holding.HoldingRegister[130] := INT_TO_WORD(#LiveRecord.Comp2_ApparentPower_kVA_x10);
+	#Holding.HoldingRegister[131] := INT_TO_WORD(#LiveRecord.Comp2_PowerFactor_x1000);
+	#Holding.HoldingRegister[132] := INT_TO_WORD(#LiveRecord.Comp2_Frequency_Hz_x10);
+	#Holding.HoldingRegister[133] := INT_TO_WORD(#LiveRecord.Comp2_Energy_kWh_x10);
+	
+	// Extended physical IO diagnostics block at 140..147
+	#Holding.HoldingRegister[140] := INT_TO_WORD(REAL_TO_INT(#IoData.InletAirHumidity_RH * 10.0));
+	#Holding.HoldingRegister[141] := INT_TO_WORD(REAL_TO_INT(#IoData.OutletAirHumidity_RH * 10.0));
+	#Holding.HoldingRegister[142] := INT_TO_WORD(REAL_TO_INT(#IoData.CondenserWaterInletTemp_C * 10.0));
+	#Holding.HoldingRegister[143] := INT_TO_WORD(REAL_TO_INT(#IoData.CondenserWaterOutletTemp_C * 10.0));
+	#Holding.HoldingRegister[144] := INT_TO_WORD(REAL_TO_INT(#IoData.AirInletTemp_C * 10.0));
+	#Holding.HoldingRegister[145] := INT_TO_WORD(REAL_TO_INT(#IoData.AirOutletTemp_C * 10.0));
+	#Holding.HoldingRegister[146] := W#16#0000;
+	#Holding.HoldingRegister[147] := W#16#0000;
+	
+	#Holding.HoldingRegister[146].%X0 := #IoData.Comp1_Rng;
+	#Holding.HoldingRegister[146].%X1 := #IoData.Comp2_Rng;
+	#Holding.HoldingRegister[146].%X2 := #IoData.AlarmActive;
+	#Holding.HoldingRegister[146].%X3 := #IoData.PlcReadyInput;
+	#Holding.HoldingRegister[147].%X0 := #IoData.Circuit1_RunCommand;
+	#Holding.HoldingRegister[147].%X1 := #IoData.Circuit2_RunCommand;
+	
+	// History ring buffer at 100 + slot * 34
+	FOR #i := 0 TO 99 DO
+	    #BaseIndex := #HistoryBase + (#i * 34);
+	    
+	    #Holding.HoldingRegister[#BaseIndex + 0] := DWORD_TO_WORD(SHR(IN := #History[#i].SequenceNo, N := 16));
+	    #Holding.HoldingRegister[#BaseIndex + 1] := DWORD_TO_WORD(#History[#i].SequenceNo AND DWORD#16#0000FFFF);
+	    #Holding.HoldingRegister[#BaseIndex + 2] := DWORD_TO_WORD(SHR(IN := #History[#i].TimestampUnix, N := 16));
+	    #Holding.HoldingRegister[#BaseIndex + 3] := DWORD_TO_WORD(#History[#i].TimestampUnix AND DWORD#16#0000FFFF);
+	    #Holding.HoldingRegister[#BaseIndex + 4] := UINT_TO_WORD(#History[#i].TestPhase);
+	    #Holding.HoldingRegister[#BaseIndex + 5] := #History[#i].StatusWord;
+	    #Holding.HoldingRegister[#BaseIndex + 6] := #History[#i].ValidityWord1;
+	    #Holding.HoldingRegister[#BaseIndex + 7] := #History[#i].ValidityWord2;
+	    #Holding.HoldingRegister[#BaseIndex + 8] := INT_TO_WORD(#History[#i].Circuit1_HP_bar_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 9] := INT_TO_WORD(#History[#i].Circuit1_LP_bar_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 10] := INT_TO_WORD(#History[#i].Circuit2_HP_bar_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 11] := INT_TO_WORD(#History[#i].Circuit2_LP_bar_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 12] := INT_TO_WORD(#History[#i].Temp1_C_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 13] := INT_TO_WORD(#History[#i].Temp2_C_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 14] := INT_TO_WORD(#History[#i].Temp3_C_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 15] := INT_TO_WORD(#History[#i].Temp4_C_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 16] := INT_TO_WORD(#History[#i].Humidity_RH_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 17] := INT_TO_WORD(#History[#i].AirVelocity_ms_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 18] := INT_TO_WORD(#History[#i].Comp1_Voltage_V_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 19] := INT_TO_WORD(#History[#i].Comp1_Current_A_x100);
+	    #Holding.HoldingRegister[#BaseIndex + 20] := INT_TO_WORD(#History[#i].Comp1_ActivePower_kW_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 21] := INT_TO_WORD(#History[#i].Comp1_ReactivePower_kVAr_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 22] := INT_TO_WORD(#History[#i].Comp1_ApparentPower_kVA_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 23] := INT_TO_WORD(#History[#i].Comp1_PowerFactor_x1000);
+	    #Holding.HoldingRegister[#BaseIndex + 24] := INT_TO_WORD(#History[#i].Comp1_Frequency_Hz_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 25] := INT_TO_WORD(#History[#i].Comp1_Energy_kWh_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 26] := INT_TO_WORD(#History[#i].Comp2_Voltage_V_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 27] := INT_TO_WORD(#History[#i].Comp2_Current_A_x100);
+	    #Holding.HoldingRegister[#BaseIndex + 28] := INT_TO_WORD(#History[#i].Comp2_ActivePower_kW_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 29] := INT_TO_WORD(#History[#i].Comp2_ReactivePower_kVAr_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 30] := INT_TO_WORD(#History[#i].Comp2_ApparentPower_kVA_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 31] := INT_TO_WORD(#History[#i].Comp2_PowerFactor_x1000);
+	    #Holding.HoldingRegister[#BaseIndex + 32] := INT_TO_WORD(#History[#i].Comp2_Frequency_Hz_x10);
+	    #Holding.HoldingRegister[#BaseIndex + 33] := INT_TO_WORD(#History[#i].Comp2_Energy_kWh_x10);
+	END_FOR;
+	
+END_FUNCTION_BLOCK

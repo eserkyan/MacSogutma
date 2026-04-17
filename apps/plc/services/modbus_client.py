@@ -171,6 +171,8 @@ class PlcModbusClient:
         max_offset = max((int(tag["register_offset"]) + self._word_count_for_tag(tag) for tag in tags), default=0)
         values = [0] * max_offset
         sim_phase, status_word = self._simulated_test_state(timestamp_unix)
+        validity_word1 = 0
+        validity_word2 = 0
 
         for tag in tags:
             tag_id = int(tag["tag_id"])
@@ -184,18 +186,29 @@ class PlcModbusClient:
                 jitter = random.randint(-2, 2) if words is not None and tag.get("simulation_enabled", True) and index == len(words) - 1 else 0
                 if offset + index < len(values):
                     values[offset + index] = max(0, int(word) + jitter)
+            validity_bit = tag.get("validity_bit")
+            if validity_bit is not None:
+                bit_index = int(validity_bit)
+                if bit_index < 16:
+                    validity_word1 |= 1 << bit_index
+                else:
+                    validity_word2 |= 1 << (bit_index - 16)
 
-        return [
+        record = [
             (sequence_no >> 16) & 0xFFFF,
             sequence_no & 0xFFFF,
             (timestamp_unix >> 16) & 0xFFFF,
             timestamp_unix & 0xFFFF,
             sim_phase,
             status_word,
-            0b0011111111111111,
-            0,
+            validity_word1,
+            validity_word2,
             *values,
         ]
+        target_count = int(TagRegistryService().get_register_layout()["live_record_count"])
+        if len(record) < target_count:
+            record.extend([0] * (target_count - len(record)))
+        return record[:target_count]
 
     @staticmethod
     def _simulated_tag_value(tag: dict[str, Any], wave: float, status_word: int) -> int:
@@ -262,12 +275,13 @@ class PlcModbusClient:
         return int(phase), status_word
 
     def _simulated_status(self, now_unix: int) -> dict[str, Any]:
+        history_capacity = int(TagRegistryService().get_register_layout()["history_capacity"])
         return {
             "PlcReady": True,
             "PlcFault": False,
-            "Buf_WriteIndex": now_unix % 300,
-            "Buf_RecordCount": min(300, 80 + now_unix % 20),
-            "Buf_BufferSize": 300,
+            "Buf_WriteIndex": now_unix % history_capacity,
+            "Buf_RecordCount": min(history_capacity, 80 + now_unix % 20),
+            "Buf_BufferSize": history_capacity,
             "Buf_LastSequenceNo": now_unix,
             "TimeSyncDone": True,
             "PlcCurrentUnix": now_unix,
@@ -316,6 +330,14 @@ class PlcModbusClient:
                 source_index = offset + index
                 if source_index < len(merged) and source_index < len(simulated_record):
                     merged[source_index] = simulated_record[source_index]
+            validity_bit = tag.get("validity_bit")
+            if validity_bit is None:
+                continue
+            bit_index = int(validity_bit)
+            if bit_index < 16 and len(merged) > 6 and len(simulated_record) > 6:
+                merged[6] |= simulated_record[6] & (1 << bit_index)
+            elif bit_index >= 16 and len(merged) > 7 and len(simulated_record) > 7:
+                merged[7] |= simulated_record[7] & (1 << (bit_index - 16))
         return merged
 
     @staticmethod

@@ -34,7 +34,7 @@ class PlcPollingService:
             runtime.plc_fault = bool(payload.status.get("PlcFault"))
             runtime.buf_write_index = int(payload.status.get("Buf_WriteIndex", 0))
             runtime.buf_record_count = int(payload.status.get("Buf_RecordCount", 0))
-            runtime.buf_buffer_size = int(payload.status.get("Buf_BufferSize", 300))
+            runtime.buf_buffer_size = int(payload.status.get("Buf_BufferSize", 100))
             runtime.buf_last_sequence_no = int(payload.status.get("Buf_LastSequenceNo", 0))
             runtime.plc_current_unix = int(payload.status.get("PlcCurrentUnix", 0))
             runtime.live_record_json = parsed_live.to_json()

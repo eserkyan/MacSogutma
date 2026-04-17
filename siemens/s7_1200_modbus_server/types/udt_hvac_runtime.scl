@@ -1,0 +1,11 @@
+TYPE "UDT_HVAC_Runtime"
+VERSION : 0.1
+   STRUCT
+      Tick500ms : Bool;
+      Tick1s : Bool;
+      TickCounter : UInt;
+      UnixNow : DWord;
+      LastUnixSet : DWord;
+   END_STRUCT;
+
+END_TYPE

@@ -14,6 +14,7 @@ from apps.core.ui_translations import get_text
 class TagRegistryService:
     _cache: dict[str, tuple[float, object]] = {}
     ttl_seconds = 5.0
+    LEGACY_DISABLED_TAG_IDS: set[int] = {109}
 
     def get_tags(self) -> list[dict[str, Any]]:
         cached = self._get_cached("tags")
@@ -99,17 +100,41 @@ class TagRegistryService:
                     changed_fields: list[str] = []
                     defaults = {
                         "tag_id": tag.tag_id,
+                        "label": tag.label,
+                        "label_en": tag.label_en,
                         "register_type": tag.register_type,
                         "source_block": tag.source_block,
                         "data_type": tag.data_type,
                         "word_order": tag.word_order,
                         "modbus_address": tag.modbus_address,
+                        "register_offset": tag.register_offset,
+                        "scale": tag.scale,
+                        "unit": tag.unit,
+                        "circuit_scope": tag.circuit_scope,
+                        "chart_group": tag.chart_group,
+                        "chart_color": tag.chart_color,
+                        "validity_bit": tag.validity_bit,
+                        "simulation_enabled": tag.simulation_enabled,
+                        "simulation_base": tag.simulation_base,
+                        "simulation_amplitude": tag.simulation_amplitude,
+                        "simulation_wave": tag.simulation_wave,
+                        "is_active": self._default_is_active(tag.tag_id),
+                        "include_in_limits": self._default_include_in_limits(tag.tag_id),
+                        "include_in_reports": self._default_include_in_reports(tag.tag_id),
                     }
                     for field_name, default_value in defaults.items():
                         current_value = getattr(existing, field_name, None)
-                        if current_value in {None, ""}:
+                        if current_value in {None, ""} or current_value != default_value:
                             setattr(existing, field_name, default_value)
                             changed_fields.append(field_name)
+                    expected_chart_group_title = self._chart_group_title(tag.chart_group, language="tr")
+                    expected_chart_group_title_en = self._chart_group_title(tag.chart_group, language="en")
+                    if existing.chart_group_title != expected_chart_group_title:
+                        existing.chart_group_title = self._chart_group_title(tag.chart_group, language="tr")
+                        changed_fields.append("chart_group_title")
+                    if existing.chart_group_title_en != expected_chart_group_title_en:
+                        existing.chart_group_title_en = self._chart_group_title(tag.chart_group, language="en")
+                        changed_fields.append("chart_group_title_en")
                     if changed_fields:
                         existing.save(update_fields=[*changed_fields, "updated_at"])
                     continue
@@ -136,9 +161,9 @@ class TagRegistryService:
                         simulation_base=tag.simulation_base,
                         simulation_amplitude=tag.simulation_amplitude,
                         simulation_wave=tag.simulation_wave,
-                        is_active=True,
-                        include_in_limits=True,
-                        include_in_reports=True,
+                        is_active=self._default_is_active(tag.tag_id),
+                        include_in_limits=self._default_include_in_limits(tag.tag_id),
+                        include_in_reports=self._default_include_in_reports(tag.tag_id),
                     )
                 )
             if create_items:
@@ -285,8 +310,11 @@ class TagRegistryService:
     def _chart_group_title(group_slug: str, language: str = "tr") -> str:
         translation_map = {
             "pressure": "charts.pressure_group",
-            "temperature": "charts.temperature_group",
-            "ambient": "charts.ambient_group",
+            "process_temperature": "charts.process_temperature_group",
+            "air_humidity": "charts.air_humidity_group",
+            "air_flow": "charts.air_flow_group",
+            "water_temperature": "charts.water_temperature_group",
+            "air_temperature": "charts.air_temperature_group",
             "comp1_electrical": "charts.comp1_group",
             "comp2_electrical": "charts.comp2_group",
         }
@@ -314,3 +342,12 @@ class TagRegistryService:
         if language == "en" and tag.get("label_en"):
             return str(tag["label_en"])
         return str(tag["label"])
+
+    def _default_is_active(self, tag_id: int) -> bool:
+        return int(tag_id) not in self.LEGACY_DISABLED_TAG_IDS
+
+    def _default_include_in_limits(self, tag_id: int) -> bool:
+        return self._default_is_active(tag_id)
+
+    def _default_include_in_reports(self, tag_id: int) -> bool:
+        return self._default_is_active(tag_id)

@@ -50,6 +50,7 @@ class DashboardPushService:
                 "recipe_name": active_test.recipe_name_snapshot if active_test else "",
                 "status": active_test.status if active_test else "",
                 "selected_circuit": int(active_test.selected_circuit) if active_test else 0,
+                "current_phase": int(active_test.current_phase.value) if active_test else 0,
             },
             "recent_tests": [
                 {
@@ -72,6 +73,19 @@ class DashboardPushService:
                 "stable_duration_sec": active_test.stable_duration_sec_snapshot if active_test else 0,
                 "stop_duration_sec": active_test.stop_duration_sec_snapshot if active_test else 0,
                 "current_phase": int(active_test.current_phase.value) if active_test else 0,
+            },
+            "ui_state": {
+                "has_active_test": active_test is not None,
+                "active_test": {
+                    "id": active_test.pk if active_test else None,
+                    "test_no": active_test.test_no if active_test else "",
+                    "status": active_test.status if active_test else "",
+                    "selected_circuit": int(active_test.selected_circuit) if active_test else 0,
+                    "current_phase": int(active_test.current_phase.value) if active_test else 0,
+                    "company_name": active_test.company.name if active_test else "",
+                    "model_name": active_test.product_model.model_name if active_test else "",
+                    "recipe_name": active_test.recipe_name_snapshot if active_test else "",
+                },
             },
         }
         if not self._should_broadcast(payload):

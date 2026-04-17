@@ -132,9 +132,18 @@ class ExcelBuilderService:
             sheet.cell(row_index, 7, self._num(row["limit_min"]))
             sheet.cell(row_index, 8, self._num(row["limit_max"]))
             passed = row["passed"]
-            status_cell = sheet.cell(row_index, 9, "PASS" if passed else "FAIL")
-            status_cell.fill = PatternFill("solid", fgColor="16A34A" if passed else "DC2626")
-            status_cell.font = Font(bold=True, color="FFFFFF")
+            has_limit = bool(row.get("has_limit"))
+            if passed is None:
+                status_text = "INVALID" if has_limit else "N/A"
+                status_fill = "F59E0B" if has_limit else "CBD5E1"
+                status_color = "FFFFFF" if has_limit else "334155"
+            else:
+                status_text = "PASS" if passed else "FAIL"
+                status_fill = "16A34A" if passed else "DC2626"
+                status_color = "FFFFFF"
+            status_cell = sheet.cell(row_index, 9, status_text)
+            status_cell.fill = PatternFill("solid", fgColor=status_fill)
+            status_cell.font = Font(bold=True, color=status_color)
             status_cell.alignment = Alignment(horizontal="center")
             sheet.cell(row_index, 10, row["message"])
 
@@ -166,9 +175,13 @@ class ExcelBuilderService:
             sheet.cell(row_index, 7, self._num(row.get("min_limit")) if row.get("min_enabled") else None)
             sheet.cell(row_index, 8, self._num(row.get("max_limit")) if row.get("max_enabled") else None)
             passed = row.get("passed")
-            status = "N/A" if passed is None else "PASS" if passed else "FAIL"
+            has_limit = bool(row.get("has_limit"))
+            status = "INVALID" if passed is None and has_limit else "N/A" if passed is None else "PASS" if passed else "FAIL"
             status_cell = sheet.cell(row_index, 9, status)
-            if passed is not None:
+            if passed is None and has_limit:
+                status_cell.fill = PatternFill("solid", fgColor="F59E0B")
+                status_cell.font = Font(bold=True, color="FFFFFF")
+            elif passed is not None:
                 status_cell.fill = PatternFill("solid", fgColor="16A34A" if passed else "DC2626")
                 status_cell.font = Font(bold=True, color="FFFFFF")
             else:

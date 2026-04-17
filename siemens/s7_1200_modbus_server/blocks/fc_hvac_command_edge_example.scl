@@ -1,0 +1,26 @@
+FUNCTION "FC_HVAC_CommandEdgeExample" : Void
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+
+BEGIN
+	
+	// Bu blok sadece ornek mantik anlatimi icindir.
+	// Gercek uygulamada FB_HVAC_ModbusServer cikis edge bitlerini
+	// kendi state machine'inizde kullanin.
+	
+	// Start:
+	// IF "FB_HVAC_ModbusServer_DB".StartRequestEdge THEN
+	//    TestStartLatch := TRUE;
+	// END_IF;
+	
+	// Stop:
+	// IF "FB_HVAC_ModbusServer_DB".StopRequestEdge THEN
+	//    TestStopLatch := TRUE;
+	// END_IF;
+	
+	// Abort:
+	// IF "FB_HVAC_ModbusServer_DB".AbortRequestEdge THEN
+	//    TestAbortLatch := TRUE;
+	// END_IF;
+	
+END_FUNCTION

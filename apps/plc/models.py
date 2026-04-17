@@ -11,7 +11,7 @@ class PlcRuntimeState(SingletonModel, TimeStampedModel):
     plc_fault = models.BooleanField(default=False)
     buf_write_index = models.PositiveIntegerField(default=0)
     buf_record_count = models.PositiveIntegerField(default=0)
-    buf_buffer_size = models.PositiveIntegerField(default=300)
+    buf_buffer_size = models.PositiveIntegerField(default=100)
     buf_last_sequence_no = models.PositiveIntegerField(default=0)
     plc_current_unix = models.BigIntegerField(default=0)
     live_record_json = models.JSONField(default=dict, blank=True)

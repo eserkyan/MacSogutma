@@ -1,0 +1,38 @@
+TYPE "UDT_HVAC_Record"
+VERSION : 0.1
+   STRUCT
+      SequenceNo : DWord;
+      TimestampUnix : DWord;
+      TestPhase : UInt;
+      StatusWord : Word;
+      ValidityWord1 : Word;
+      ValidityWord2 : Word;
+      Circuit1_HP_bar_x10 : Int;
+      Circuit1_LP_bar_x10 : Int;
+      Circuit2_HP_bar_x10 : Int;
+      Circuit2_LP_bar_x10 : Int;
+      Temp1_C_x10 : Int;
+      Temp2_C_x10 : Int;
+      Temp3_C_x10 : Int;
+      Temp4_C_x10 : Int;
+      Humidity_RH_x10 : Int;
+      AirVelocity_ms_x10 : Int;
+      Comp1_Voltage_V_x10 : Int;
+      Comp1_Current_A_x100 : Int;
+      Comp1_ActivePower_kW_x10 : Int;
+      Comp1_ReactivePower_kVAr_x10 : Int;
+      Comp1_ApparentPower_kVA_x10 : Int;
+      Comp1_PowerFactor_x1000 : Int;
+      Comp1_Frequency_Hz_x10 : Int;
+      Comp1_Energy_kWh_x10 : Int;
+      Comp2_Voltage_V_x10 : Int;
+      Comp2_Current_A_x100 : Int;
+      Comp2_ActivePower_kW_x10 : Int;
+      Comp2_ReactivePower_kVAr_x10 : Int;
+      Comp2_ApparentPower_kVA_x10 : Int;
+      Comp2_PowerFactor_x1000 : Int;
+      Comp2_Frequency_Hz_x10 : Int;
+      Comp2_Energy_kWh_x10 : Int;
+   END_STRUCT;
+
+END_TYPE

@@ -1,0 +1,18 @@
+TYPE "UDT_HVAC_Command"
+VERSION : 0.1
+   STRUCT
+      CircuitSelect : UInt;   // 0 none, 1 c1, 2 c2, 3 both
+      StartRequest : Bool;   // Python 2 sn pulse, PLC rising edge bakar
+      StopRequest : Bool;   // Python 2 sn pulse, PLC rising edge bakar
+      AbortRequest : Bool;   // Python 2 sn pulse, PLC rising edge bakar
+      TestPhase : UInt;   // 0 idle, 1 start, 2 stable, 3 stop, 4 manual, 5 aborted
+      TestActive : Bool;
+      Reserved0 : UInt;
+      Reserved1 : UInt;
+      Reserved2 : UInt;
+      Reserved3 : UInt;
+      TimeSyncRequest : Bool;   // Python pulse, PLC rising edge bakar
+      TimeSyncUnix : DWord;
+   END_STRUCT;
+
+END_TYPE

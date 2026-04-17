@@ -1,0 +1,7 @@
+TYPE "UDT_HVAC_HoldingRegisters"
+VERSION : 0.1
+   STRUCT
+      HoldingRegister : Array[0..4095] of Word;
+   END_STRUCT;
+
+END_TYPE

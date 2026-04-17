@@ -1,0 +1,11 @@
+TYPE "UDT_HVAC_ModbusRuntime"
+VERSION : 0.1
+   STRUCT
+      Holding : "UDT_HVAC_HoldingRegisters";
+      NDR : Bool;
+      DR : Bool;
+      Error : Bool;
+      Status : Word;
+   END_STRUCT;
+
+END_TYPE

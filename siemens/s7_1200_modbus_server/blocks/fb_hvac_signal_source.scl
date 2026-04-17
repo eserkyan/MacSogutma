@@ -1,0 +1,191 @@
+FUNCTION_BLOCK "FB_HVAC_SignalSource"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   VAR_INPUT 
+      UseSimulation : Bool;
+      Cmd : "UDT_HVAC_Command";
+      CycleSeconds : Real;
+      AI_Circuit1_HP_raw : Int;
+      AI_Circuit1_LP_raw : Int;
+      AI_Circuit2_HP_raw : Int;
+      AI_Circuit2_LP_raw : Int;
+      AI_AirFlow_raw : Int;
+      AI_InletAirHumidity_raw : Int;
+      AI_OutletAirHumidity_raw : Int;
+      AI_C1_DischargeTemp_raw : Int;
+      AI_C2_DischargeTemp_raw : Int;
+      AI_C1_SuctionTemp_raw : Int;
+      AI_C2_SuctionTemp_raw : Int;
+      AI_CondenserWaterInletTemp_raw : Int;
+      AI_CondenserWaterOutletTemp_raw : Int;
+      AI_AirInletTemp_raw : Int;
+      AI_AirOutletTemp_raw : Int;
+      DI_Comp1_Rng : Bool;
+      DI_Comp2_Rng : Bool;
+      DI_Alarm : Bool;
+      DI_Ready : Bool;
+   END_VAR
+
+   VAR_IN_OUT 
+      IoData : "UDT_HVAC_IO";
+   END_VAR
+
+   VAR 
+      SimTick : Real;
+      AnalogRawValidMin : Int := 1;
+      AnalogRawValidMax : Int := 30000;
+   END_VAR
+
+
+BEGIN
+	
+	#IoData.UseSimulation := #UseSimulation;
+	
+	IF #UseSimulation THEN
+	    #SimTick := #SimTick + #CycleSeconds;
+	    
+	    #IoData.PlcReadyInput := TRUE;
+	    #IoData.AlarmActive := FALSE;
+	    
+	    #IoData.Circuit1_HP_bar := 25.5 + SIN(#SimTick * 0.25) * 1.2;
+	    #IoData.Circuit1_LP_bar := 6.5 + SIN(#SimTick * 0.90) * 0.5;
+	    #IoData.Circuit2_HP_bar := 24.8 + SIN(#SimTick * 0.35) * 1.0;
+	    #IoData.Circuit2_LP_bar := 6.0 + SIN(#SimTick * 0.75) * 0.4;
+	    
+	    #IoData.Temp1_C := 29.0 + SIN(#SimTick * 0.50) * 1.8;
+	    #IoData.Temp2_C := 24.0 + SIN(#SimTick * 0.20) * 0.8;
+	    #IoData.Temp3_C := 24.5 + SIN(#SimTick * 0.35) * 0.7;
+	    #IoData.Temp4_C := 25.5 + SIN(#SimTick * 0.18) * 0.6;
+	    
+	    #IoData.Humidity_RH := 45.0 + SIN(#SimTick * 0.33) * 2.5;
+	    #IoData.AirVelocity_ms := 3.2 + SIN(#SimTick * 0.55) * 0.4;
+	    #IoData.InletAirHumidity_RH := #IoData.Humidity_RH;
+	    #IoData.OutletAirHumidity_RH := #IoData.Humidity_RH - 3.0;
+	    #IoData.CondenserWaterInletTemp_C := 18.0 + SIN(#SimTick * 0.22) * 0.7;
+	    #IoData.CondenserWaterOutletTemp_C := 22.0 + SIN(#SimTick * 0.24) * 0.8;
+	    #IoData.AirInletTemp_C := 27.0 + SIN(#SimTick * 0.30) * 0.9;
+	    #IoData.AirOutletTemp_C := 19.0 + SIN(#SimTick * 0.27) * 0.8;
+	    
+	    #IoData.Comp1_Voltage_V := 230.0;
+	    #IoData.Comp2_Voltage_V := 229.5;
+	    
+	    IF (#Cmd.CircuitSelect = 1 OR #Cmd.CircuitSelect = 3) AND #Cmd.TestActive AND (#Cmd.TestPhase = 1 OR #Cmd.TestPhase = 2) THEN
+	        #IoData.Comp1_Rng := TRUE;
+	        #IoData.Comp1_Current_A := 12.4 + SIN(#SimTick * 0.40) * 0.3;
+	        #IoData.Comp1_ActivePower_kW := 4.2 + SIN(#SimTick * 0.25) * 0.2;
+	        #IoData.Comp1_ReactivePower_kVAr := 1.1 + SIN(#SimTick * 0.20) * 0.1;
+	        #IoData.Comp1_ApparentPower_kVA := 4.4 + SIN(#SimTick * 0.22) * 0.2;
+	        #IoData.Comp1_PowerFactor := 0.98;
+	        #IoData.Comp1_Frequency_Hz := 50.0;
+	        #IoData.Comp1_Energy_kWh := #IoData.Comp1_Energy_kWh + (#CycleSeconds / 3600.0) * #IoData.Comp1_ActivePower_kW;
+	    ELSE
+	        #IoData.Comp1_Rng := FALSE;
+	        #IoData.Comp1_Current_A := 0.0;
+	        #IoData.Comp1_ActivePower_kW := 0.0;
+	        #IoData.Comp1_ReactivePower_kVAr := 0.0;
+	        #IoData.Comp1_ApparentPower_kVA := 0.0;
+	        #IoData.Comp1_PowerFactor := 0.0;
+	        #IoData.Comp1_Frequency_Hz := 0.0;
+	    END_IF;
+	    
+	    IF (#Cmd.CircuitSelect = 2 OR #Cmd.CircuitSelect = 3) AND #Cmd.TestActive AND (#Cmd.TestPhase = 1 OR #Cmd.TestPhase = 2) THEN
+	        #IoData.Comp2_Rng := TRUE;
+	        #IoData.Comp2_Current_A := 7.2 + SIN(#SimTick * 0.42) * 0.25;
+	        #IoData.Comp2_ActivePower_kW := 3.4 + SIN(#SimTick * 0.28) * 0.15;
+	        #IoData.Comp2_ReactivePower_kVAr := 0.9 + SIN(#SimTick * 0.18) * 0.1;
+	        #IoData.Comp2_ApparentPower_kVA := 3.7 + SIN(#SimTick * 0.20) * 0.2;
+	        #IoData.Comp2_PowerFactor := 0.97;
+	        #IoData.Comp2_Frequency_Hz := 50.0;
+	        #IoData.Comp2_Energy_kWh := #IoData.Comp2_Energy_kWh + (#CycleSeconds / 3600.0) * #IoData.Comp2_ActivePower_kW;
+	    ELSE
+	        #IoData.Comp2_Rng := FALSE;
+	        #IoData.Comp2_Current_A := 0.0;
+	        #IoData.Comp2_ActivePower_kW := 0.0;
+	        #IoData.Comp2_ReactivePower_kVAr := 0.0;
+	        #IoData.Comp2_ApparentPower_kVA := 0.0;
+	        #IoData.Comp2_PowerFactor := 0.0;
+	        #IoData.Comp2_Frequency_Hz := 0.0;
+	    END_IF;
+	    
+	    #IoData.Circuit1_HP_Valid := TRUE;
+	    #IoData.Circuit1_LP_Valid := TRUE;
+	    #IoData.Circuit2_HP_Valid := TRUE;
+	    #IoData.Circuit2_LP_Valid := TRUE;
+	    #IoData.Temp1_Valid := TRUE;
+	    #IoData.Temp2_Valid := TRUE;
+	    #IoData.Temp3_Valid := TRUE;
+	    #IoData.Temp4_Valid := TRUE;
+	    #IoData.Humidity_Valid := TRUE;
+	    #IoData.AirVelocity_Valid := TRUE;
+	    #IoData.InletAirHumidity_Valid := TRUE;
+	    #IoData.OutletAirHumidity_Valid := TRUE;
+	    #IoData.CondenserWaterInletTemp_Valid := TRUE;
+	    #IoData.CondenserWaterOutletTemp_Valid := TRUE;
+	    #IoData.AirInletTemp_Valid := TRUE;
+	    #IoData.AirOutletTemp_Valid := TRUE;
+	    #IoData.Comp1_Voltage_Valid := TRUE;
+	    #IoData.Comp1_Current_Valid := TRUE;
+	    #IoData.Comp1_Power_Valid := TRUE;
+	    #IoData.Comp1_Frequency_Valid := TRUE;
+	    #IoData.Comp1_Energy_Valid := TRUE;
+	    #IoData.Comp2_Voltage_Valid := TRUE;
+	    #IoData.Comp2_Current_Valid := TRUE;
+	    #IoData.Comp2_Power_Valid := TRUE;
+	    #IoData.Comp2_Frequency_Valid := TRUE;
+	    #IoData.Comp2_Energy_Valid := TRUE;
+	ELSE
+	    #IoData.PlcReadyInput := #DI_Ready;
+	    #IoData.AlarmActive := #DI_Alarm;
+	    
+	    #IoData.Circuit1_HP_bar := INT_TO_REAL(#AI_Circuit1_HP_raw) * 0.001;
+	    #IoData.Circuit1_LP_bar := INT_TO_REAL(#AI_Circuit1_LP_raw) * 0.001;
+	    #IoData.Circuit2_HP_bar := INT_TO_REAL(#AI_Circuit2_HP_raw) * 0.001;
+	    #IoData.Circuit2_LP_bar := INT_TO_REAL(#AI_Circuit2_LP_raw) * 0.001;
+	    #IoData.AirVelocity_ms := INT_TO_REAL(#AI_AirFlow_raw) * 0.001;
+	    #IoData.InletAirHumidity_RH := INT_TO_REAL(#AI_InletAirHumidity_raw) * 0.01;
+	    #IoData.OutletAirHumidity_RH := INT_TO_REAL(#AI_OutletAirHumidity_raw) * 0.01;
+	    #IoData.Temp1_C := INT_TO_REAL(#AI_C1_DischargeTemp_raw) * 0.01;
+	    #IoData.Temp2_C := INT_TO_REAL(#AI_C2_DischargeTemp_raw) * 0.01;
+	    #IoData.Temp3_C := INT_TO_REAL(#AI_C1_SuctionTemp_raw) * 0.01;
+	    #IoData.Temp4_C := INT_TO_REAL(#AI_C2_SuctionTemp_raw) * 0.01;
+	    #IoData.CondenserWaterInletTemp_C := INT_TO_REAL(#AI_CondenserWaterInletTemp_raw) * 0.01;
+	    #IoData.CondenserWaterOutletTemp_C := INT_TO_REAL(#AI_CondenserWaterOutletTemp_raw) * 0.01;
+	    #IoData.AirInletTemp_C := INT_TO_REAL(#AI_AirInletTemp_raw) * 0.01;
+	    #IoData.AirOutletTemp_C := INT_TO_REAL(#AI_AirOutletTemp_raw) * 0.01;
+	    #IoData.Humidity_RH := #IoData.InletAirHumidity_RH;
+	    
+	    #IoData.Comp1_Rng := #DI_Comp1_Rng;
+	    #IoData.Comp2_Rng := #DI_Comp2_Rng;
+	    
+	    // Gercek sensorde validity ham analog degerden turetilir.
+	    #IoData.Circuit1_HP_Valid := (#AI_Circuit1_HP_raw >= #AnalogRawValidMin) AND (#AI_Circuit1_HP_raw <= #AnalogRawValidMax);
+	    #IoData.Circuit1_LP_Valid := (#AI_Circuit1_LP_raw >= #AnalogRawValidMin) AND (#AI_Circuit1_LP_raw <= #AnalogRawValidMax);
+	    #IoData.Circuit2_HP_Valid := (#AI_Circuit2_HP_raw >= #AnalogRawValidMin) AND (#AI_Circuit2_HP_raw <= #AnalogRawValidMax);
+	    #IoData.Circuit2_LP_Valid := (#AI_Circuit2_LP_raw >= #AnalogRawValidMin) AND (#AI_Circuit2_LP_raw <= #AnalogRawValidMax);
+	    #IoData.AirVelocity_Valid := (#AI_AirFlow_raw >= #AnalogRawValidMin) AND (#AI_AirFlow_raw <= #AnalogRawValidMax);
+	    #IoData.InletAirHumidity_Valid := (#AI_InletAirHumidity_raw >= #AnalogRawValidMin) AND (#AI_InletAirHumidity_raw <= #AnalogRawValidMax);
+	    #IoData.OutletAirHumidity_Valid := (#AI_OutletAirHumidity_raw >= #AnalogRawValidMin) AND (#AI_OutletAirHumidity_raw <= #AnalogRawValidMax);
+	    #IoData.Temp1_Valid := (#AI_C1_DischargeTemp_raw >= #AnalogRawValidMin) AND (#AI_C1_DischargeTemp_raw <= #AnalogRawValidMax);
+	    #IoData.Temp2_Valid := (#AI_C2_DischargeTemp_raw >= #AnalogRawValidMin) AND (#AI_C2_DischargeTemp_raw <= #AnalogRawValidMax);
+	    #IoData.Temp3_Valid := (#AI_C1_SuctionTemp_raw >= #AnalogRawValidMin) AND (#AI_C1_SuctionTemp_raw <= #AnalogRawValidMax);
+	    #IoData.Temp4_Valid := (#AI_C2_SuctionTemp_raw >= #AnalogRawValidMin) AND (#AI_C2_SuctionTemp_raw <= #AnalogRawValidMax);
+	    #IoData.CondenserWaterInletTemp_Valid := (#AI_CondenserWaterInletTemp_raw >= #AnalogRawValidMin) AND (#AI_CondenserWaterInletTemp_raw <= #AnalogRawValidMax);
+	    #IoData.CondenserWaterOutletTemp_Valid := (#AI_CondenserWaterOutletTemp_raw >= #AnalogRawValidMin) AND (#AI_CondenserWaterOutletTemp_raw <= #AnalogRawValidMax);
+	    #IoData.AirInletTemp_Valid := (#AI_AirInletTemp_raw >= #AnalogRawValidMin) AND (#AI_AirInletTemp_raw <= #AnalogRawValidMax);
+	    #IoData.AirOutletTemp_Valid := (#AI_AirOutletTemp_raw >= #AnalogRawValidMin) AND (#AI_AirOutletTemp_raw <= #AnalogRawValidMax);
+	    #IoData.Humidity_Valid := #IoData.InletAirHumidity_Valid;
+	    
+	    // Elektriksel olcum PLC'ye bagli geliyorsa deger > 0 oldugunda valid kabul edilir.
+	    #IoData.Comp1_Voltage_Valid := #IoData.Comp1_Voltage_V > 0.0;
+	    #IoData.Comp1_Current_Valid := #IoData.Comp1_Current_A > 0.0;
+	    #IoData.Comp1_Power_Valid := (#IoData.Comp1_ActivePower_kW > 0.0) OR (#IoData.Comp1_ApparentPower_kVA > 0.0);
+	    #IoData.Comp1_Frequency_Valid := #IoData.Comp1_Frequency_Hz > 0.0;
+	    #IoData.Comp1_Energy_Valid := #IoData.Comp1_Current_Valid OR #IoData.Comp1_Power_Valid OR #IoData.Comp1_Voltage_Valid;
+	    #IoData.Comp2_Voltage_Valid := #IoData.Comp2_Voltage_V > 0.0;
+	    #IoData.Comp2_Current_Valid := #IoData.Comp2_Current_A > 0.0;
+	    #IoData.Comp2_Power_Valid := (#IoData.Comp2_ActivePower_kW > 0.0) OR (#IoData.Comp2_ApparentPower_kVA > 0.0);
+	    #IoData.Comp2_Frequency_Valid := #IoData.Comp2_Frequency_Hz > 0.0;
+	    #IoData.Comp2_Energy_Valid := #IoData.Comp2_Current_Valid OR #IoData.Comp2_Power_Valid OR #IoData.Comp2_Voltage_Valid;
+	END_IF;
+	
+END_FUNCTION_BLOCK

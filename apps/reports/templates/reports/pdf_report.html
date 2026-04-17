@@ -120,7 +120,11 @@
                         <td>{% if row.limit_max is not None %}{{ row.limit_max|floatformat:2 }}{% else %}-{% endif %}</td>
                         <td>
                             {% if row.passed is None %}
-                                <span class="status-chip status-chip-na">{{ report.labels.status_na }}</span>
+                                {% if row.has_limit %}
+                                    <span class="status-chip status-chip-fail">{{ report.labels.status_invalid|default:"INVALID" }}</span>
+                                {% else %}
+                                    <span class="status-chip status-chip-na">{{ report.labels.status_na }}</span>
+                                {% endif %}
                             {% elif row.passed %}
                                 <span class="status-chip status-chip-pass">{{ report.labels.status_pass }}</span>
                             {% else %}
@@ -163,7 +167,11 @@
                         <td>{% if row.max_enabled and row.max_limit is not None %}{{ row.max_limit|floatformat:2 }}{% else %}-{% endif %}</td>
                         <td>
                             {% if row.passed is None %}
-                                <span class="status-chip status-chip-na">{{ report.labels.status_na }}</span>
+                                {% if row.has_limit %}
+                                    <span class="status-chip status-chip-fail">{{ report.labels.status_invalid|default:"INVALID" }}</span>
+                                {% else %}
+                                    <span class="status-chip status-chip-na">{{ report.labels.status_na }}</span>
+                                {% endif %}
                             {% elif row.passed %}
                                 <span class="status-chip status-chip-pass">{{ report.labels.status_pass }}</span>
                             {% else %}

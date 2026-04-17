@@ -187,6 +187,7 @@ class TagConfigForm(forms.ModelForm):
         self.fields["modbus_address"].widget.attrs.setdefault("min", "0")
         self.fields["register_offset"].widget.attrs.setdefault("min", "0")
         self.fields["validity_bit"].widget.attrs.setdefault("min", "0")
+        self.fields["validity_bit"].help_text = "0-15 = Validity Word 1, 16-31 = Validity Word 2"
         self.fields["chart_color"].widget = forms.TextInput(
             attrs={
                 "type": "color",
@@ -265,10 +266,13 @@ class TagConfigForm(forms.ModelForm):
     @staticmethod
     def _chart_group_label(group_slug: str, language: str) -> str:
         labels = {
-            "pressure": {"tr": "Basinc Grafikleri", "en": "Pressure Charts"},
-            "temperature": {"tr": "Sicaklik Grafikleri", "en": "Temperature Charts"},
-            "ambient": {"tr": "Ortam Grafikleri", "en": "Ambient Charts"},
-            "comp1_electrical": {"tr": "Kompresor 1 Elektriksel", "en": "Compressor 1 Electrical"},
-            "comp2_electrical": {"tr": "Kompresor 2 Elektriksel", "en": "Compressor 2 Electrical"},
+            "pressure": {"tr": "Basinc Sensorleri", "en": "Pressure Sensors"},
+            "process_temperature": {"tr": "Proses Hat Sicakliklari", "en": "Process Line Temperatures"},
+            "air_humidity": {"tr": "Hava Nem Sensorleri", "en": "Air Humidity Sensors"},
+            "air_flow": {"tr": "Hava Akis Sensorleri", "en": "Air Flow Sensors"},
+            "water_temperature": {"tr": "Kondenser Su Sicakliklari", "en": "Condenser Water Temperatures"},
+            "air_temperature": {"tr": "Hava Sicaklik Sensorleri", "en": "Air Temperature Sensors"},
+            "comp1_electrical": {"tr": "Devre 1 Elektriksel", "en": "Circuit 1 Electrical"},
+            "comp2_electrical": {"tr": "Devre 2 Elektriksel", "en": "Circuit 2 Electrical"},
         }
         return labels.get(group_slug, {}).get(language, group_slug.replace("_", " ").title())

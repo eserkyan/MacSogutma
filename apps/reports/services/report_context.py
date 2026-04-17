@@ -57,6 +57,7 @@ class ReportContextService:
                         else None
                     ),
                     "passed": result.passed if result else None,
+                    "has_limit": has_active_limit(test_record.limits_snapshot_json.get(parameter_code, {}), 2),
                     "message": self._build_stable_row_message(test_record, parameter_code, result, stats["avg_value"], language),
                 }
             )
@@ -264,6 +265,7 @@ class ReportContextService:
             "general_result": "Genel Sonuc" if language == "tr" else "General Result",
             "status_pass": "Gecti" if language == "tr" else "PASS",
             "status_fail": "Kaldi" if language == "tr" else "FAIL",
+            "status_invalid": "Gecersiz" if language == "tr" else "INVALID",
             "status_aborted": "Iptal Edildi" if language == "tr" else "ABORTED",
             "status_na": "YOK" if language == "tr" else "N/A",
             "traceability_line_1": (

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from apps.core.constants import CircuitSelect
 from apps.core.constants import TestPhase
 from apps.core.services.tag_registry import TagRegistryService
+from apps.plc.services.parser import validity_bit_is_set
 from apps.tests.models import TestRecord
 from apps.tests.services.limit_analysis import LimitAnalysisService
 
@@ -415,9 +416,11 @@ class ChartBuilderService:
             if isinstance(validity, dict) and str(key) in validity:
                 return bool(validity.get(str(key)))
             validity_word1 = int(sample.get("validity_word1") or 0)
-            return bool(validity_word1 & (1 << bit_index))
+            validity_word2 = int(sample.get("validity_word2") or 0)
+            return validity_bit_is_set(validity_word1, validity_word2, bit_index)
         validity_word1 = int(getattr(sample, "validity_word1", 0) or 0)
-        return bool(validity_word1 & (1 << bit_index))
+        validity_word2 = int(getattr(sample, "validity_word2", 0) or 0)
+        return validity_bit_is_set(validity_word1, validity_word2, bit_index)
 
     @staticmethod
     def _sample_phase(sample: object) -> int:

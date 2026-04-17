@@ -128,7 +128,7 @@ class TestEvaluationResult(TimeStampedModel):
     min_limit = models.DecimalField(max_digits=12, decimal_places=4, blank=True, null=True)
     max_enabled = models.BooleanField(default=False)
     max_limit = models.DecimalField(max_digits=12, decimal_places=4, blank=True, null=True)
-    passed = models.BooleanField(default=True)
+    passed = models.BooleanField(blank=True, null=True, default=None)
     message = models.TextField(blank=True)
 
     class Meta:

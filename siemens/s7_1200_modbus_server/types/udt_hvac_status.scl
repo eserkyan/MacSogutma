@@ -1,0 +1,16 @@
+TYPE "UDT_HVAC_Status"
+VERSION : 0.1
+   STRUCT
+      PlcReady : Bool;
+      Reserved0 : UInt;
+      PlcFault : Bool;
+      Reserved1 : UInt;
+      Buf_WriteIndex : UInt;
+      Buf_RecordCount : UInt;
+      Buf_BufferSize : UInt;
+      Buf_LastSequenceNo : DWord;
+      TimeSyncDone : Bool;
+      PlcCurrentUnix : DWord;
+   END_STRUCT;
+
+END_TYPE

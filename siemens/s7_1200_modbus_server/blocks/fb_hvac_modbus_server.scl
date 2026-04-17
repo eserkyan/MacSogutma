@@ -1,0 +1,148 @@
+FUNCTION_BLOCK "FB_HVAC_ModbusServer"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   VAR_INPUT 
+      Cmd : "UDT_HVAC_Command";
+      IoData : "UDT_HVAC_IO";
+      SampleTrigger500ms : Bool;
+      UnixTimeNow : DWord;
+   END_VAR
+
+   VAR_OUTPUT 
+      StartRequestEdge : Bool;
+      StopRequestEdge : Bool;
+      AbortRequestEdge : Bool;
+      TimeSyncRequestEdge : Bool;
+   END_VAR
+
+   VAR_IN_OUT 
+      Status : "UDT_HVAC_Status";
+      LiveRecord : "UDT_HVAC_Record";
+      History : Array[0..99] of "UDT_HVAC_Record";
+   END_VAR
+
+   VAR 
+      Ring : "FB_HVAC_RingBuffer";
+      SequenceNo : DWord;
+      PrevStartRequest : Bool;
+      PrevStopRequest : Bool;
+      PrevAbortRequest : Bool;
+      PrevTimeSyncRequest : Bool;
+   END_VAR
+
+
+BEGIN
+	
+	#StartRequestEdge := #Cmd.StartRequest AND NOT #PrevStartRequest;
+	#StopRequestEdge := #Cmd.StopRequest AND NOT #PrevStopRequest;
+	#AbortRequestEdge := #Cmd.AbortRequest AND NOT #PrevAbortRequest;
+	#TimeSyncRequestEdge := #Cmd.TimeSyncRequest AND NOT #PrevTimeSyncRequest;
+	
+	#Status.PlcReady := #IoData.PlcReadyInput;
+	#Status.PlcFault := #IoData.AlarmActive;
+	#Status.Buf_BufferSize := 100;
+	#Status.PlcCurrentUnix := #UnixTimeNow;
+	
+	IF #TimeSyncRequestEdge THEN
+	    #Status.TimeSyncDone := TRUE;
+	    #Status.PlcCurrentUnix := #Cmd.TimeSyncUnix;
+	ELSE
+	    #Status.TimeSyncDone := FALSE;
+	END_IF;
+	
+	IF #SampleTrigger500ms THEN
+	    #SequenceNo := #SequenceNo + DWORD#1;
+	    
+	    #LiveRecord.SequenceNo := #SequenceNo;
+	    #LiveRecord.TimestampUnix := #Status.PlcCurrentUnix;
+	    #LiveRecord.TestPhase := #Cmd.TestPhase;
+	    #LiveRecord.StatusWord := W#16#0000;
+	    #LiveRecord.ValidityWord1 := W#16#0000;
+	    #LiveRecord.ValidityWord2 := W#16#0000;
+	    
+	    IF #Cmd.TestActive THEN
+	        #LiveRecord.StatusWord.%X0 := TRUE;
+	    END_IF;
+	    IF #IoData.AlarmActive THEN
+	        #LiveRecord.StatusWord.%X1 := TRUE;
+	    END_IF;
+	    IF #IoData.Comp1_Rng THEN
+	        #LiveRecord.StatusWord.%X2 := TRUE;
+	    END_IF;
+	    IF #IoData.Comp2_Rng THEN
+	        #LiveRecord.StatusWord.%X3 := TRUE;
+	    END_IF;
+	    
+	    #LiveRecord.ValidityWord1.%X0 := #IoData.Circuit1_HP_Valid;
+	    #LiveRecord.ValidityWord1.%X1 := #IoData.Circuit1_LP_Valid;
+	    #LiveRecord.ValidityWord1.%X2 := #IoData.Circuit2_HP_Valid;
+	    #LiveRecord.ValidityWord1.%X3 := #IoData.Circuit2_LP_Valid;
+	    #LiveRecord.ValidityWord1.%X4 := #IoData.Temp1_Valid;
+	    #LiveRecord.ValidityWord1.%X5 := #IoData.Temp2_Valid;
+	    #LiveRecord.ValidityWord1.%X6 := #IoData.Temp3_Valid;
+	    #LiveRecord.ValidityWord1.%X7 := #IoData.Temp4_Valid;
+	    #LiveRecord.ValidityWord1.%X8 := #IoData.Humidity_Valid;
+	    #LiveRecord.ValidityWord1.%X9 := #IoData.AirVelocity_Valid;
+	    #LiveRecord.ValidityWord1.%X10 := #IoData.Comp1_Current_Valid;
+	    #LiveRecord.ValidityWord1.%X11 := #IoData.Comp1_Power_Valid;
+	    #LiveRecord.ValidityWord1.%X12 := #IoData.Comp2_Current_Valid;
+	    #LiveRecord.ValidityWord1.%X13 := #IoData.Comp2_Power_Valid;
+	    #LiveRecord.ValidityWord2.%X0 := #IoData.InletAirHumidity_Valid;
+	    #LiveRecord.ValidityWord2.%X1 := #IoData.OutletAirHumidity_Valid;
+	    #LiveRecord.ValidityWord2.%X2 := #IoData.CondenserWaterInletTemp_Valid;
+	    #LiveRecord.ValidityWord2.%X3 := #IoData.CondenserWaterOutletTemp_Valid;
+	    #LiveRecord.ValidityWord2.%X4 := #IoData.AirInletTemp_Valid;
+	    #LiveRecord.ValidityWord2.%X5 := #IoData.AirOutletTemp_Valid;
+	    #LiveRecord.ValidityWord2.%X6 := #IoData.Comp1_Voltage_Valid;
+	    #LiveRecord.ValidityWord2.%X7 := #IoData.Comp1_Frequency_Valid;
+	    #LiveRecord.ValidityWord2.%X8 := #IoData.Comp1_Energy_Valid;
+	    #LiveRecord.ValidityWord2.%X9 := #IoData.Comp2_Voltage_Valid;
+	    #LiveRecord.ValidityWord2.%X10 := #IoData.Comp2_Frequency_Valid;
+	    #LiveRecord.ValidityWord2.%X11 := #IoData.Comp2_Energy_Valid;
+	    
+	    #LiveRecord.Circuit1_HP_bar_x10 := REAL_TO_INT(#IoData.Circuit1_HP_bar * 10.0);
+	    #LiveRecord.Circuit1_LP_bar_x10 := REAL_TO_INT(#IoData.Circuit1_LP_bar * 10.0);
+	    #LiveRecord.Circuit2_HP_bar_x10 := REAL_TO_INT(#IoData.Circuit2_HP_bar * 10.0);
+	    #LiveRecord.Circuit2_LP_bar_x10 := REAL_TO_INT(#IoData.Circuit2_LP_bar * 10.0);
+	    #LiveRecord.Temp1_C_x10 := REAL_TO_INT(#IoData.Temp1_C * 10.0);
+	    #LiveRecord.Temp2_C_x10 := REAL_TO_INT(#IoData.Temp2_C * 10.0);
+	    #LiveRecord.Temp3_C_x10 := REAL_TO_INT(#IoData.Temp3_C * 10.0);
+	    #LiveRecord.Temp4_C_x10 := REAL_TO_INT(#IoData.Temp4_C * 10.0);
+	    #LiveRecord.Humidity_RH_x10 := REAL_TO_INT(#IoData.Humidity_RH * 10.0);
+	    #LiveRecord.AirVelocity_ms_x10 := REAL_TO_INT(#IoData.AirVelocity_ms * 10.0);
+	    
+	    #LiveRecord.Comp1_Voltage_V_x10 := REAL_TO_INT(#IoData.Comp1_Voltage_V * 10.0);
+	    #LiveRecord.Comp1_Current_A_x100 := REAL_TO_INT(#IoData.Comp1_Current_A * 100.0);
+	    #LiveRecord.Comp1_ActivePower_kW_x10 := REAL_TO_INT(#IoData.Comp1_ActivePower_kW * 10.0);
+	    #LiveRecord.Comp1_ReactivePower_kVAr_x10 := REAL_TO_INT(#IoData.Comp1_ReactivePower_kVAr * 10.0);
+	    #LiveRecord.Comp1_ApparentPower_kVA_x10 := REAL_TO_INT(#IoData.Comp1_ApparentPower_kVA * 10.0);
+	    #LiveRecord.Comp1_PowerFactor_x1000 := REAL_TO_INT(#IoData.Comp1_PowerFactor * 1000.0);
+	    #LiveRecord.Comp1_Frequency_Hz_x10 := REAL_TO_INT(#IoData.Comp1_Frequency_Hz * 10.0);
+	    #LiveRecord.Comp1_Energy_kWh_x10 := REAL_TO_INT(#IoData.Comp1_Energy_kWh * 10.0);
+	    
+	    #LiveRecord.Comp2_Voltage_V_x10 := REAL_TO_INT(#IoData.Comp2_Voltage_V * 10.0);
+	    #LiveRecord.Comp2_Current_A_x100 := REAL_TO_INT(#IoData.Comp2_Current_A * 100.0);
+	    #LiveRecord.Comp2_ActivePower_kW_x10 := REAL_TO_INT(#IoData.Comp2_ActivePower_kW * 10.0);
+	    #LiveRecord.Comp2_ReactivePower_kVAr_x10 := REAL_TO_INT(#IoData.Comp2_ReactivePower_kVAr * 10.0);
+	    #LiveRecord.Comp2_ApparentPower_kVA_x10 := REAL_TO_INT(#IoData.Comp2_ApparentPower_kVA * 10.0);
+	    #LiveRecord.Comp2_PowerFactor_x1000 := REAL_TO_INT(#IoData.Comp2_PowerFactor * 1000.0);
+	    #LiveRecord.Comp2_Frequency_Hz_x10 := REAL_TO_INT(#IoData.Comp2_Frequency_Hz * 10.0);
+	    #LiveRecord.Comp2_Energy_kWh_x10 := REAL_TO_INT(#IoData.Comp2_Energy_kWh * 10.0);
+	END_IF;
+	
+	#Ring(
+	      Enable := TRUE,
+	      SampleTrigger := #SampleTrigger500ms,
+	      RecordIn := #LiveRecord,
+	      Buffer := #History,
+	      WriteIndex := #Status.Buf_WriteIndex,
+	      RecordCount := #Status.Buf_RecordCount,
+	      LastSequenceNo := #Status.Buf_LastSequenceNo
+	);
+	
+	#PrevStartRequest := #Cmd.StartRequest;
+	#PrevStopRequest := #Cmd.StopRequest;
+	#PrevAbortRequest := #Cmd.AbortRequest;
+	#PrevTimeSyncRequest := #Cmd.TimeSyncRequest;
+	
+END_FUNCTION_BLOCK

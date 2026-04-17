@@ -1,0 +1,38 @@
+FUNCTION_BLOCK "FB_HVAC_MB_ServerTcp"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 1.0
+   VAR_INPUT 
+      Disconnect : Bool;
+      ConnectID : UInt;
+      Port : UInt;
+   END_VAR
+
+   VAR_OUTPUT 
+      NDR : Bool;
+      DR : Bool;
+      Error : Bool;
+      Status : Word;
+   END_VAR
+
+   VAR_IN_OUT 
+      Holding : "UDT_HVAC_HoldingRegisters";
+   END_VAR
+
+
+BEGIN
+	
+	// This project is aligned to the S7-1200 MB_SERVER signature documented as:
+	// DISCONNECT, CONNECT_ID, IP_PORT, MB_HOLD_REG, NDR, DR, ERROR, STATUS
+	// If your TIA version exposes another interface, adapt this wrapper in your project.
+	"MB_SERVER_DB2"(
+	          DISCONNECT := #Disconnect,
+	          CONNECT_ID := #ConnectID,
+	          IP_PORT := #Port,
+	          MB_HOLD_REG := #Holding.HoldingRegister,
+	          NDR => #NDR,
+	          DR => #DR,
+	          ERROR => #Error,
+	          STATUS => #Status
+	);
+	
+END_FUNCTION_BLOCK
