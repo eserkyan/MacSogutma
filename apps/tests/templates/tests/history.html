@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load ui_i18n tz ui_datetime status_labels %}
+{% block title %}{% ui_text 'tests.history_title' %}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header">{% ui_text 'tests.history_title' %}</div>
+    <div class="card-body">
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-md-8"><input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="{% ui_text 'tests.search' %}"></div>
+            <div class="col-md-3"><input type="text" name="result" value="{{ request.GET.result }}" class="form-control" placeholder="{% ui_text 'tests.result' %}"></div>
+            <div class="col-md-1"><button class="btn btn-primary w-100">{% ui_text 'common.filter' %}</button></div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-hover history-table align-middle">
+                <thead>
+                    <tr>
+                        <th class="history-col-date">{% ui_text 'tests.date' %}</th>
+                        <th class="history-col-test-no">{% ui_text 'tests.test_no' %}</th>
+                        <th class="history-col-company">{% ui_text 'tests.company' %}</th>
+                        <th class="history-col-model">{% ui_text 'products.name' %}</th>
+                        <th class="history-col-recipe">{% ui_text 'tests.recipe' %}</th>
+                        <th class="history-col-result">{% ui_text 'tests.result' %}</th>
+                        <th class="history-col-actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in tests %}
+                    <tr>
+                        <td class="history-cell-break">{{ item.created_at|ui_datetime_short:ui_language }} Yerel Saat</td>
+                        <td class="history-cell-break">{{ item.test_no }}</td>
+                        <td class="history-cell-break">{{ item.company.name }}</td>
+                        <td class="history-cell-break">{{ item.product_model.model_name }}</td>
+                        <td class="history-cell-break">{{ item.recipe_name_snapshot }}</td>
+                        <td class="history-cell-break">
+                            <span class="status-pill status-pill-{{ item.status|lower|cut:'_' }}">{{ item.status|test_status_label:ui_language }}</span>
+                        </td>
+                        <td>
+                            <div class="history-actions">
+                            <a href="{% url 'tests:detail' item.pk %}" class="btn btn-outline-secondary btn-sm">{% ui_text 'common.detail' %}</a>
+                            <a href="{% url 'tests:download_report' item.pk %}?lang=tr" class="btn btn-outline-primary btn-sm">PDF TR</a>
+                            <a href="{% url 'tests:download_report' item.pk %}?lang=en" class="btn btn-outline-primary btn-sm">PDF EN</a>
+                            <a href="{% url 'tests:delete' item.pk %}" class="btn btn-outline-danger btn-sm">{% ui_text 'common.delete' %}</a>
+                            </div>
+                            <div class="download-meta-list mt-2">
+                                <div class="small text-muted text-break">PDF TR: {{ item.pdf_path_tr }}</div>
+                                <div class="small text-muted text-break">PDF EN: {{ item.pdf_path_en }}</div>
+                                <div class="small text-muted text-break">Excel TR: {{ item.excel_path_tr }}</div>
+                                <div class="small text-muted text-break">Excel EN: {{ item.excel_path_en }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-muted">{% ui_text 'tests.history_none' %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

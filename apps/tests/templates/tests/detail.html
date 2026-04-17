@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load ui_i18n status_labels %}
+{% block title %}{% ui_text 'tests.detail_title' %}{% endblock %}
+{% block content %}
+{{ chart_data|json_script:"test-detail-chart-data" }}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header">{% ui_text 'tests.general_info' %}</div>
+            <div class="card-body">
+                <p><strong>{{ test_record.test_no }}</strong></p>
+                <p>{{ test_record.company.name }}</p>
+                <p>{{ test_record.product_model.model_name }}</p>
+                <p>{{ test_record.recipe_name_snapshot }}</p>
+                <p>
+                    {% ui_text 'common.status' %}:
+                    <span class="status-pill status-pill-{{ test_record.status|lower|cut:'_' }}">{{ test_record.status|test_status_label:ui_language }}</span>
+                </p>
+                <div class="mb-3">
+                    <div class="small text-muted mb-2">{% ui_text 'tests.download_report' %}</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'tests:download_report' test_record.pk %}?lang=tr" class="btn btn-primary btn-sm">PDF TR</a>
+                        <a href="{% url 'tests:download_report' test_record.pk %}?lang=en" class="btn btn-outline-primary btn-sm">PDF EN</a>
+                    </div>
+                    <div class="download-meta-list mt-2">
+                        <div class="small text-muted text-break">{% ui_text 'tests.file_target' %} TR: {{ pdf_path_tr }}</div>
+                        <div class="small text-muted text-break">{% ui_text 'tests.file_target' %} EN: {{ pdf_path_en }}</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted mb-2">{% ui_text 'tests.download_excel' %}</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'tests:download_excel' test_record.pk %}?lang=tr" class="btn btn-success btn-sm">Excel TR</a>
+                        <a href="{% url 'tests:download_excel' test_record.pk %}?lang=en" class="btn btn-outline-success btn-sm">Excel EN</a>
+                    </div>
+                    <div class="download-meta-list mt-2">
+                        <div class="small text-muted text-break">{% ui_text 'tests.file_target' %} TR: {{ excel_path_tr }}</div>
+                        <div class="small text-muted text-break">{% ui_text 'tests.file_target' %} EN: {{ excel_path_en }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">{% ui_text 'tests.stable_eval' %}</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>{% ui_text 'common.parameter' %}</th>
+                            <th>{% ui_text 'common.unit' %}</th>
+                            <th>{% ui_text 'tests.measured_min' %}</th>
+                            <th>AVG</th>
+                            <th>{% ui_text 'tests.measured_max' %}</th>
+                            <th>{% ui_text 'tests.limit_min' %}</th>
+                            <th>{% ui_text 'tests.limit_max' %}</th>
+                            <th>{% ui_text 'common.status' %}</th>
+                            <th>{% ui_text 'tests.message' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in evaluation_rows %}
+                        <tr>
+                            <td>{{ row.parameter_name }}</td>
+                            <td>{{ row.unit }}</td>
+                            <td>{{ row.stats.min_value|floatformat:2|default:"-" }}</td>
+                            <td>{{ row.avg_value|floatformat:2|default:"-" }}</td>
+                            <td>{{ row.stats.max_value|floatformat:2|default:"-" }}</td>
+                            <td>
+                                {% if row.min_enabled %}
+                                    {{ row.min_limit|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.max_enabled %}
+                                    {{ row.max_limit|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.passed is None %}
+                                    <span class="status-pill status-pill-na">{% ui_text 'tests.status_na' %}</span>
+                                {% else %}
+                                    {% if row.passed %}
+                                        <span class="status-pill status-pill-pass">{% ui_text 'tests.status_pass' %}</span>
+                                    {% else %}
+                                        <span class="status-pill status-pill-fail">{% ui_text 'tests.status_fail' %}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>{{ row.display_message }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% for section in phase_stat_sections %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">{{ section.title }}</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>{% ui_text 'common.parameter' %}</th>
+                            <th>{% ui_text 'common.unit' %}</th>
+                            <th>{% ui_text 'tests.measured_min' %}</th>
+                            <th>AVG</th>
+                            <th>{% ui_text 'tests.measured_max' %}</th>
+                            <th>{% ui_text 'tests.limit_min' %}</th>
+                            <th>{% ui_text 'tests.limit_max' %}</th>
+                            <th>{% ui_text 'common.status' %}</th>
+                            <th>{% ui_text 'tests.message' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in section.rows %}
+                        <tr>
+                            <td>{{ row.parameter_name }}</td>
+                            <td>{{ row.unit }}</td>
+                            <td>{{ row.stats.min_value|floatformat:2|default:"-" }}</td>
+                            <td>{{ row.stats.avg_value|floatformat:2|default:"-" }}</td>
+                            <td>{{ row.stats.max_value|floatformat:2|default:"-" }}</td>
+                            <td>
+                                {% if row.min_enabled %}
+                                    {{ row.min_limit|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.max_enabled %}
+                                    {{ row.max_limit|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.passed is None %}
+                                    <span class="status-pill status-pill-na">{% ui_text 'tests.status_na' %}</span>
+                                {% else %}
+                                    {% if row.passed %}
+                                        <span class="status-pill status-pill-pass">{% ui_text 'tests.status_pass' %}</span>
+                                    {% else %}
+                                        <span class="status-pill status-pill-fail">{% ui_text 'tests.status_fail' %}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>{{ row.display_message }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">{% ui_text 'tests.limit_excursions' %}</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>{% ui_text 'common.parameter' %}</th>
+                            <th>{% ui_text 'tests.phase_name' %}</th>
+                            <th>{% ui_text 'tests.elapsed_time' %}</th>
+                            <th>{% ui_text 'tests.measured_value' %}</th>
+                            <th>{% ui_text 'tests.limit_type' %}</th>
+                            <th>{% ui_text 'tests.limit_value' %}</th>
+                            <th>{% ui_text 'tests.message' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in limit_excursions %}
+                            <tr>
+                                <td>{{ item.parameter_name }}</td>
+                                <td>{{ item.phase_name }}</td>
+                                <td>{{ item.elapsed_seconds|floatformat:2 }} sn</td>
+                                <td>{{ item.sample_value|floatformat:2 }} {{ item.unit }}</td>
+                                <td>{{ item.limit_type }}</td>
+                                <td>{{ item.limit_value|floatformat:2 }} {{ item.unit }}</td>
+                                <td>{{ item.message }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">{% ui_text 'tests.no_limit_excursion' %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for chart in detail_chart_cards %}
+                {% ifchanged chart.phase_slug %}
+                    {% if chart.phase_slug == 'start' %}
+                        <div class="col-12"><h5 class="mt-2 mb-0">{% ui_text 'tests.start_phase_charts' %}</h5></div>
+                    {% elif chart.phase_slug == 'stable' %}
+                        <div class="col-12"><h5 class="mt-2 mb-0">{% ui_text 'tests.stable_phase_charts' %}</h5></div>
+                    {% elif chart.phase_slug == 'stop' %}
+                        <div class="col-12"><h5 class="mt-2 mb-0">{% ui_text 'tests.stop_phase_charts' %}</h5></div>
+                    {% else %}
+                        <div class="col-12"><h5 class="mt-2 mb-0">{% ui_text 'tests.whole_test_charts' %}</h5></div>
+                    {% endif %}
+                {% endifchanged %}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header">{{ chart.title }}</div>
+                        <div class="card-body active-chart-body">
+                            <canvas
+                                id="{{ chart.chart_id }}"
+                                class="detail-test-chart"
+                                data-source-chart-id="{{ chart.source_chart_id }}"
+                                data-phase-slug="{{ chart.phase_slug }}"
+                            ></canvas>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

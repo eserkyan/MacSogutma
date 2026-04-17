@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% load ui_i18n tz ui_datetime %}
+{% block title %}{% ui_text 'settings.title' %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-column gap-4 settings-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>{% ui_text 'settings.title' %}</span>
+            <span class="badge text-bg-secondary">{{ tags|length }} tag</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-0">{% ui_text 'settings.summary' %}</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">{% ui_text 'settings.plc_schema_title' %}</div>
+        <div class="card-body">
+            <div class="alert alert-light border small">
+                {% ui_text 'settings.modbus_reference_rule' %}
+                {% ui_text 'settings.modbus_reference_help' %}
+            </div>
+            <div class="alert alert-info border small">{% ui_text 'settings.plc_only_notice' %}</div>
+            <form method="post" action="{% url 'core:settings_actions' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_plc_schema">
+                {% for section in plc_form.sections %}
+                    <div class="settings-form-section {% if forloop.last %}mb-0{% endif %}">
+                        <div class="settings-form-section-title">{{ section.title }}</div>
+                        <p class="text-muted small mb-3">{{ section.description }}</p>
+                        <div class="form-grid">
+                            {% include "includes/form_fields.html" with fields=section.fields form=plc_form %}
+                        </div>
+                    </div>
+                {% endfor %}
+                <div class="pt-3">
+                    <button type="submit" class="btn btn-primary">{% ui_text 'common.save' %}</button>
+                </div>
+            </form>
+            <form method="post" action="{% url 'core:settings_actions' %}" class="pt-3 border-top mt-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual_time_sync">
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-xl-4">
+                        <div class="d-flex flex-wrap align-items-center gap-2 h-100">
+                            <button type="submit" class="btn btn-outline-primary">{% ui_text 'settings.manual_time_sync' %}</button>
+                            <span class="small text-muted">{% ui_text 'settings.manual_time_sync_help' %}</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-8">
+                        <div class="row g-3">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="trend-card h-100">
+                                    <div class="small text-muted">{% ui_text 'settings.server_time' %}</div>
+                                    <div class="fw-semibold">{{ server_now|date:"d.m.Y H:i:s" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="trend-card h-100">
+                                    <div class="small text-muted">{% ui_text 'settings.utc_time' %}</div>
+                                    <div class="fw-semibold">{{ utc_now|date:"d.m.Y H:i:s" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="trend-card h-100">
+                                    <div class="small text-muted">{% ui_text 'settings.last_time_sync' %}</div>
+                                    <div class="fw-semibold">{% if runtime.last_time_sync_at %}{{ runtime.last_time_sync_at|ui_datetime:ui_language }} {% ui_text 'settings.local_time_suffix' %}{% else %}-{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="trend-card h-100">
+                                    <div class="small text-muted">{% ui_text 'settings.last_drift' %}</div>
+                                    <div class="fw-semibold">{{ runtime.last_time_sync_drift_sec }} sn</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>{% ui_text 'settings.tag_add_title' %}</span>
+            <span class="badge text-bg-light text-dark">{% ui_text 'settings.modbus_tag_badge' %}</span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'core:settings_actions' %}" id="tag-config-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_tag">
+
+                <div class="settings-form-section">
+                    <div class="settings-form-section-title">{% ui_text 'settings.identity_section' %}</div>
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">{{ tag_form.tag_id.label_tag }}{{ tag_form.tag_id }}<div class="form-text">{{ tag_form.tag_id.help_text }}</div>{% if tag_form.tag_id.errors %}<div class="text-danger small">{{ tag_form.tag_id.errors|join:", " }}</div>{% endif %}</div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.label.label_tag }}{{ tag_form.label }}{% if tag_form.label.errors %}<div class="text-danger small">{{ tag_form.label.errors|join:", " }}</div>{% endif %}</div>
+                        <div class="col-lg-5 col-md-12">{{ tag_form.label_en.label_tag }}{{ tag_form.label_en }}<div class="form-text">{{ tag_form.label_en.help_text }}</div>{% if tag_form.label_en.errors %}<div class="text-danger small">{{ tag_form.label_en.errors|join:", " }}</div>{% endif %}</div>
+                    </div>
+                    <div class="alert alert-light border mt-3 mb-0 small">{% ui_text 'settings.identity_help' %}</div>
+                </div>
+
+                <div class="settings-form-section">
+                    <div class="settings-form-section-title">{% ui_text 'settings.modbus_section' %}</div>
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">{{ tag_form.register_type.label_tag }}{{ tag_form.register_type }}</div>
+                        <div class="col-lg-3 col-md-6">{{ tag_form.source_block.label_tag }}{{ tag_form.source_block }}</div>
+                        <div class="col-lg-3 col-md-6">{{ tag_form.data_type.label_tag }}{{ tag_form.data_type }}<div class="form-text">{{ tag_form.data_type.help_text }}</div></div>
+                        <div class="col-lg-3 col-md-6">{{ tag_form.word_order.label_tag }}{{ tag_form.word_order }}</div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.modbus_address.label_tag }}{{ tag_form.modbus_address }}<div class="form-text">{{ tag_form.modbus_address.help_text }}</div></div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.register_offset.label_tag }}{{ tag_form.register_offset }}<div class="form-text">{{ tag_form.register_offset.help_text }}</div></div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.validity_bit.label_tag }}{{ tag_form.validity_bit }}</div>
+                    </div>
+                    <div class="alert alert-light border mt-3 mb-0 small">{% ui_text 'settings.modbus_section_help' %}</div>
+                </div>
+
+                <div class="settings-form-section">
+                    <div class="settings-form-section-title">{% ui_text 'settings.scaling_chart_section' %}</div>
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">{{ tag_form.unit.label_tag }}{{ tag_form.unit }}</div>
+                        <div class="col-lg-3 col-md-6">{{ tag_form.scale.label_tag }}{{ tag_form.scale }}</div>
+                        <div class="col-lg-3 col-md-6">{{ tag_form.circuit_scope.label_tag }}{{ tag_form.circuit_scope }}</div>
+                        <div class="col-lg-3 col-md-6">{{ tag_form.chart_group.label_tag }}{{ tag_form.chart_group }}<div class="form-text">{{ tag_form.chart_group.help_text }}</div></div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.chart_group_title.label_tag }}{{ tag_form.chart_group_title }}<div class="form-text">{{ tag_form.chart_group_title.help_text }}</div></div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.chart_group_title_en.label_tag }}{{ tag_form.chart_group_title_en }}<div class="form-text">{{ tag_form.chart_group_title_en.help_text }}</div></div>
+                        <div class="col-lg-4 col-md-3">{{ tag_form.chart_color.label_tag }}{{ tag_form.chart_color }}</div>
+                    </div>
+                </div>
+
+                <div class="settings-form-section">
+                    <div class="settings-form-section-title">{% ui_text 'settings.simulation_section' %}</div>
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6 form-check-wrap">{{ tag_form.simulation_enabled }} {{ tag_form.simulation_enabled.label_tag }}</div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.simulation_base.label_tag }}{{ tag_form.simulation_base }}</div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.simulation_amplitude.label_tag }}{{ tag_form.simulation_amplitude }}</div>
+                        <div class="col-lg-4 col-md-6">{{ tag_form.simulation_wave.label_tag }}{{ tag_form.simulation_wave }}</div>
+                    </div>
+                </div>
+
+                <div class="settings-form-section mb-0">
+                    <div class="settings-form-section-title">{% ui_text 'settings.behavior_section' %}</div>
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6 form-check-wrap">{{ tag_form.is_active }} {{ tag_form.is_active.label_tag }}</div>
+                        <div class="col-lg-4 col-md-6 form-check-wrap">{{ tag_form.include_in_limits }} {{ tag_form.include_in_limits.label_tag }}</div>
+                        <div class="col-lg-4 col-md-6 form-check-wrap">{{ tag_form.include_in_reports }} {{ tag_form.include_in_reports.label_tag }}</div>
+                    </div>
+                </div>
+
+                <div class="pt-3 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-success">{% ui_text 'settings.tag_add_button' %}</button>
+                    <button type="button" class="btn btn-outline-secondary" id="tag-form-reset">{% ui_text 'settings.clear_form' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">{% ui_text 'settings.tag_table_title' %}</div>
+        <div class="card-body">
+                <table class="table table-sm table-hover align-middle settings-tag-table">
+                    <thead>
+                        <tr>
+                            <th>{% ui_text 'settings.table_id' %}</th>
+                            <th>{% ui_text 'settings.table_label' %}</th>
+                            <th>{% ui_text 'settings.table_modbus' %}</th>
+                            <th>{% ui_text 'settings.table_validity_scale' %}</th>
+                            <th>{% ui_text 'settings.tag_scope' %}</th>
+                            <th>{% ui_text 'settings.table_chart_source' %}</th>
+                            <th>{% ui_text 'common.status' %}</th>
+                            <th class="text-end">{% ui_text 'settings.actions' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tag in tags %}
+                            <tr>
+                                <td><code>{{ tag.tag_id }}</code></td>
+                                <td class="settings-tag-main-cell">
+                                    <div class="fw-semibold">{{ tag.label }}</div>
+                                    <div class="small text-muted">{{ tag.label_en|default:"-" }}</div>
+                                    <div class="small text-muted">{{ tag.unit }}</div>
+                                </td>
+                                <td class="settings-tag-meta-cell">
+                                    <div><span class="settings-chip">{{ tag.get_source_block_display }}</span> <span class="settings-chip">{{ tag.get_register_type_display }}</span></div>
+                                    <div class="small text-muted mt-1">Adres: {{ tag.modbus_address }} | Offset: {{ tag.register_offset }}</div>
+                                    <div class="small text-muted">{% ui_text 'settings.reference_label' %}: {{ tag.modbus_reference }}</div>
+                                    <div class="small text-muted">{{ tag.get_data_type_display }} / {{ tag.word_order }}</div>
+                                </td>
+                                <td class="settings-tag-meta-cell">
+                                    <div class="small fw-semibold">Validity: {{ tag.validity_bit|default:"-" }}</div>
+                                    <div class="small text-muted">{% ui_text 'settings.scale_label' %}: {{ tag.scale }}</div>
+                                </td>
+                                <td class="settings-tag-meta-cell">{{ tag.get_circuit_scope_display }}</td>
+                                <td class="settings-tag-meta-cell">
+                                    <div><span class="settings-chip settings-chip-soft">{{ tag.chart_group }}</span></div>
+                                    <div class="small text-muted mt-1">{{ tag.chart_group_title|default:"-" }}</div>
+                                    <div class="small text-muted">{{ tag.chart_group_title_en|default:"-" }}</div>
+                                    <div class="mt-1">
+                                        {% if tag.simulation_enabled %}
+                                            <span class="badge text-bg-warning text-dark">{% ui_text 'settings.simulation_badge' %}</span>
+                                        {% else %}
+                                            <span class="badge text-bg-info">{% ui_text 'settings.plc_badge' %}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if tag.is_active %}
+                                        <span class="badge text-bg-success">{% ui_text 'form.is_active' %}</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">{% ui_text 'common.invalid' %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm me-2 js-tag-fill"
+                                        data-tag-id="{{ tag.id }}"
+                                        data-tag-tag-id="{{ tag.tag_id }}"
+                                        data-tag-label="{{ tag.label }}"
+                                        data-tag-label-en="{{ tag.label_en }}"
+                                        data-tag-unit="{{ tag.unit }}"
+                                        data-tag-scale="{{ tag.scale }}"
+                                        data-tag-register-type="{{ tag.register_type }}"
+                                        data-tag-source-block="{{ tag.source_block }}"
+                                        data-tag-data-type="{{ tag.data_type }}"
+                                        data-tag-word-order="{{ tag.word_order }}"
+                                        data-tag-modbus-address="{{ tag.modbus_address }}"
+                                        data-tag-register-offset="{{ tag.register_offset }}"
+                                        data-tag-validity-bit="{{ tag.validity_bit|default:'' }}"
+                                        data-tag-circuit-scope="{{ tag.circuit_scope }}"
+                                        data-tag-chart-group="{{ tag.chart_group }}"
+                                        data-tag-chart-group-title="{{ tag.chart_group_title }}"
+                                        data-tag-chart-group-title-en="{{ tag.chart_group_title_en }}"
+                                        data-tag-chart-color="{{ tag.chart_color }}"
+                                        data-tag-simulation-enabled="{{ tag.simulation_enabled|yesno:'true,false' }}"
+                                        data-tag-simulation-base="{{ tag.simulation_base }}"
+                                        data-tag-simulation-amplitude="{{ tag.simulation_amplitude }}"
+                                        data-tag-simulation-wave="{{ tag.simulation_wave }}"
+                                        data-tag-is-active="{{ tag.is_active|yesno:'true,false' }}"
+                                        data-tag-include-in-limits="{{ tag.include_in_limits|yesno:'true,false' }}"
+                                        data-tag-include-in-reports="{{ tag.include_in_reports|yesno:'true,false' }}"
+                                    >
+                                        {% ui_text 'common.edit' %}
+                                    </button>
+                                    <form method="post" action="{% url 'core:settings_actions' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete_tag">
+                                        <input type="hidden" name="tag_id" value="{{ tag.id }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('{% ui_text 'settings.tag_delete_confirm' %}')">
+                                            {% ui_text 'common.delete' %}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">{% ui_text 'common.no_records' %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const form = document.getElementById("tag-config-form");
+        const resetButton = document.getElementById("tag-form-reset");
+        if (!form) return;
+
+        const setValue = (name, value) => {
+            const field = form.querySelector(`[name="${name}"]`);
+            if (!field) return;
+            if (field.type === "checkbox") {
+                field.checked = value === "true";
+                return;
+            }
+            field.value = value ?? "";
+        };
+
+        const groupDefaults = {
+            pressure: { tr: "Basinc Grafikleri", en: "Pressure Charts" },
+            temperature: { tr: "Sicaklik Grafikleri", en: "Temperature Charts" },
+            ambient: { tr: "Ortam Grafikleri", en: "Ambient Charts" },
+            comp1_electrical: { tr: "Kompresor 1 Elektriksel", en: "Compressor 1 Electrical" },
+            comp2_electrical: { tr: "Kompresor 2 Elektriksel", en: "Compressor 2 Electrical" },
+        };
+
+        const updateGroupTitles = (force = false) => {
+            const groupField = form.querySelector('[name="chart_group"]');
+            const titleTrField = form.querySelector('[name="chart_group_title"]');
+            const titleEnField = form.querySelector('[name="chart_group_title_en"]');
+            if (!groupField || !titleTrField || !titleEnField) return;
+            const defaults = groupDefaults[groupField.value];
+            if (!defaults) return;
+            const trShouldUpdate = force || !titleTrField.value.trim() || Object.values(groupDefaults).some((item) => item.tr === titleTrField.value.trim());
+            const enShouldUpdate = force || !titleEnField.value.trim() || Object.values(groupDefaults).some((item) => item.en === titleEnField.value.trim());
+            if (trShouldUpdate) {
+                titleTrField.value = defaults.tr;
+            }
+            if (enShouldUpdate) {
+                titleEnField.value = defaults.en;
+            }
+        };
+
+        const clearEditState = () => {
+            const configIdField = form.querySelector('[name="config_id"]');
+            if (configIdField) {
+                configIdField.remove();
+            }
+            form.reset();
+            const tagIdInput = form.querySelector('[name="tag_id"]');
+            if (tagIdInput) {
+                tagIdInput.readOnly = false;
+            }
+            updateGroupTitles(true);
+        };
+
+        document.querySelectorAll(".js-tag-fill").forEach((button) => {
+            button.addEventListener("click", () => {
+                const data = button.dataset;
+                let configIdField = form.querySelector('[name="config_id"]');
+                if (!configIdField) {
+                    configIdField = document.createElement("input");
+                    configIdField.type = "hidden";
+                    configIdField.name = "config_id";
+                    form.appendChild(configIdField);
+                }
+                configIdField.value = data.tagId;
+                setValue("tag_id", data.tagTagId);
+                setValue("label", data.tagLabel);
+                setValue("label_en", data.tagLabelEn);
+                setValue("unit", data.tagUnit);
+                setValue("scale", data.tagScale);
+                setValue("register_type", data.tagRegisterType);
+                setValue("source_block", data.tagSourceBlock);
+                setValue("data_type", data.tagDataType);
+                setValue("word_order", data.tagWordOrder);
+                setValue("modbus_address", data.tagModbusAddress);
+                setValue("register_offset", data.tagRegisterOffset);
+                setValue("validity_bit", data.tagValidityBit);
+                setValue("circuit_scope", data.tagCircuitScope);
+                setValue("chart_group", data.tagChartGroup);
+                setValue("chart_group_title", data.tagChartGroupTitle);
+                setValue("chart_group_title_en", data.tagChartGroupTitleEn);
+                setValue("chart_color", data.tagChartColor);
+                setValue("simulation_enabled", data.tagSimulationEnabled);
+                setValue("simulation_base", data.tagSimulationBase);
+                setValue("simulation_amplitude", data.tagSimulationAmplitude);
+                setValue("simulation_wave", data.tagSimulationWave);
+                setValue("is_active", data.tagIsActive);
+                setValue("include_in_limits", data.tagIncludeInLimits);
+                setValue("include_in_reports", data.tagIncludeInReports);
+                const tagIdInput = form.querySelector('[name="tag_id"]');
+                if (tagIdInput) {
+                    tagIdInput.readOnly = true;
+                }
+                form.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        });
+
+        const chartGroupField = form.querySelector('[name="chart_group"]');
+        if (chartGroupField) {
+            chartGroupField.addEventListener("change", () => updateGroupTitles(false));
+        }
+        updateGroupTitles(false);
+
+        if (resetButton) {
+            resetButton.addEventListener("click", clearEditState);
+        }
+    })();
+</script>
+{% endblock %}

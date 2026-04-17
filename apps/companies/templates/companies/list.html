@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% ui_text 'companies.title' %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+    <h1 class="h3 mb-0">{% ui_text 'companies.title' %}</h1>
+    <a href="{% url 'companies:create' %}" class="btn btn-primary">{% ui_text 'common.new_company' %}</a>
+</div>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% ui_text 'companies.code' %}</th>
+                    <th>{% ui_text 'companies.name' %}</th>
+                    <th>{% ui_text 'companies.contact' %}</th>
+                    <th>{% ui_text 'companies.state' %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for company in companies %}
+                <tr>
+                    <td>{{ company.code }}</td>
+                    <td>{{ company.name }}</td>
+                    <td>{{ company.contact_name }}</td>
+                    <td>{{ company.is_active|yesno:"Aktif,Pasif" }}</td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'companies:update' company.pk %}" class="btn btn-outline-secondary btn-sm">{% ui_text 'common.edit' %}</a>
+                        <a href="{% url 'companies:delete' company.pk %}" class="btn btn-outline-danger btn-sm">{% ui_text 'common.delete' %}</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-muted">{% ui_text 'companies.none' %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

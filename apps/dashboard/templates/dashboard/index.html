@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load ui_i18n tz ui_datetime status_labels %}
+{% block title %}{% ui_text 'dashboard.title' %}{% endblock %}
+{% block content %}
+<div id="dashboard-live-config" data-ws-path="/ws/dashboard/"></div>
+
+{% if show_data_error %}
+<div class="alert alert-danger d-flex justify-content-between align-items-center shadow-sm">
+    <div>
+        <strong>{% ui_text 'dashboard.data_error' %}</strong>
+        <div>{{ data_error_message }}</div>
+    </div>
+    <div class="display-6 fw-bold">!</div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="small text-muted mb-2">{% ui_text 'dashboard.auto_refresh' %}</div>
+        <div class="card shadow-sm">
+            <div class="card-header">{% ui_text 'dashboard.plc_overview' %}</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.ready' %}</span><strong id="metric-ready">{% if ui_language == 'tr' %}{{ runtime.plc_ready|yesno:"EVET,HAYIR" }}{% else %}{{ runtime.plc_ready|yesno:"YES,NO" }}{% endif %}</strong></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.comp1_rng' %}</span><strong id="metric-comp1-rng">{% if comp1_rng %}ON{% else %}OFF{% endif %}</strong></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.comp2_rng' %}</span><strong id="metric-comp2-rng">{% if comp2_rng %}ON{% else %}OFF{% endif %}</strong></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.fault' %}</span><strong id="metric-fault">{% if ui_language == 'tr' %}{{ runtime.plc_fault|yesno:"EVET,HAYIR" }}{% else %}{{ runtime.plc_fault|yesno:"YES,NO" }}{% endif %}</strong></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.connection' %}</span><strong id="metric-connection">{% if ui_language == 'tr' %}{{ runtime.connection_ok|yesno:"AKTIF,PASIF" }}{% else %}{{ runtime.connection_ok|yesno:"ACTIVE,DOWN" }}{% endif %}</strong></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.stale' %}</span><strong id="metric-stale">{% if ui_language == 'tr' %}{{ runtime.stale_data|yesno:"EVET,HAYIR" }}{% else %}{{ runtime.stale_data|yesno:"YES,NO" }}{% endif %}</strong></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="metric-card"><span>{% ui_text 'dashboard.commanded_circuit' %}</span><strong id="metric-commanded-circuit" data-current-circuit="{% if active_test %}{{ active_test.selected_circuit }}{% else %}0{% endif %}">{{ commanded_circuit_label }}</strong></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="row g-4">
+            {% for section in dashboard_sections %}
+            <div class="col-xl-6 col-12">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">{{ section.title }}</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive dashboard-table-responsive">
+                            <table class="table table-sm mb-0 align-middle dashboard-live-table">
+                                <thead>
+                                    <tr>
+                                        <th>{% ui_text 'common.parameter' %}</th>
+                                        <th class="dashboard-value-col">{% ui_text 'common.value' %}</th>
+                                        <th class="dashboard-unit-col">{% ui_text 'common.unit' %}</th>
+                                        <th class="dashboard-validity-col">{% ui_text 'common.validity' %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in section.rows %}
+                                    <tr class="{% if row.valid is False %}table-warning{% endif %}">
+                                        <td class="dashboard-parameter-cell">
+                                            <div class="dashboard-parameter-label">{{ row.label }}</div>
+                                            <div class="dashboard-parameter-id">Tag ID: {{ row.code }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center justify-content-between gap-2" data-param-code="{{ row.code }}">
+                                                <div class="dashboard-value-text">
+                                                    {% if row.value is not None %}
+                                                        {{ row.value }}
+                                                    {% else %}
+                                                        <span class="text-danger">{% ui_text 'common.no_data' %}</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if row.trend_series_json and row.trend_series_json != "[]" %}
+                                                    <div class="inline-sparkline-wrap">
+                                                        <canvas
+                                                            class="sparkline-chart sparkline-inline"
+                                                            data-label="{{ row.label }}"
+                                                            data-unit="{{ row.unit }}"
+                                                            data-color="{{ row.trend_color }}"
+                                                            data-labels='{{ row.trend_labels_json|escapejs }}'
+                                                            data-series='{{ row.trend_series_json|escapejs }}'></canvas>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>{{ row.unit }}</td>
+                                        <td>
+                                            <span class="dashboard-validity-badge badge
+                                                {% if row.valid is None %}text-bg-secondary
+                                                {% elif row.valid %}text-bg-success
+                                                {% else %}text-bg-danger{% endif %}">
+                                                {% if row.valid is None %}
+                                                    {% ui_text 'common.not_available' %}
+                                                {% elif row.valid %}
+                                                    {% ui_text 'common.valid' %}
+                                                {% else %}
+                                                    {% ui_text 'common.invalid' %}
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm mb-4 dashboard-active-test-panel">
+            <div class="card-header">{% ui_text 'nav.active_test' %}</div>
+            <div class="card-body" id="dashboard-active-test-card">
+                {% if active_test %}
+                    <h5 id="dashboard-active-test-no">{{ active_test.test_no }}</h5>
+                    <p class="mb-1" id="dashboard-active-test-company">{{ active_test.company.name }} / {{ active_test.product_model.model_name }}</p>
+                    <p class="mb-1" id="dashboard-active-test-recipe">{{ active_test.recipe_name_snapshot }}</p>
+                    <p class="mb-1" id="dashboard-active-test-commanded-circuit" data-current-circuit="{{ active_test.selected_circuit }}">{% ui_text 'dashboard.commanded_circuit' %}: {{ commanded_circuit_label }}</p>
+                    <p class="text-muted" id="dashboard-active-test-status">{% ui_text 'common.status' %}: {{ active_test.status|test_status_label:ui_language }}</p>
+                    <a id="dashboard-active-test-link" href="{% url 'tests:active' %}" class="btn btn-primary btn-sm">{% ui_text 'common.open' %}</a>
+                {% else %}
+                    <p class="text-muted mb-0" id="dashboard-active-test-empty">{% ui_text 'tests.no_active' %}</p>
+                    <h5 id="dashboard-active-test-no" class="d-none"></h5>
+                    <p class="mb-1 d-none" id="dashboard-active-test-company"></p>
+                    <p class="mb-1 d-none" id="dashboard-active-test-recipe"></p>
+                    <p class="mb-1 d-none" id="dashboard-active-test-commanded-circuit"></p>
+                    <p class="text-muted d-none" id="dashboard-active-test-status"></p>
+                    <a id="dashboard-active-test-link" href="{% url 'tests:active' %}" class="btn btn-primary btn-sm d-none">{% ui_text 'common.open' %}</a>
+                {% endif %}
+            </div>
+            <a class="stretched-link dashboard-active-test-overlay" href="{% url 'tests:active' %}" aria-label="{% ui_text 'nav.active_test' %}"></a>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">{% ui_text 'dashboard.recent_events' %}</div>
+            <div class="list-group list-group-flush">
+                {% for event in recent_events %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ event.event_code }}</strong>
+                            <span class="badge text-bg-dark">{{ event.event_type }}</span>
+                        </div>
+                        <div class="small text-muted">{{ event.created_at|ui_datetime:ui_language }} Yerel Saat</div>
+                        <div class="small">{{ event.message }}</div>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-muted">{% ui_text 'dashboard.no_events' %}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">{% ui_text 'dashboard.recent_tests' %}</div>
+            <div class="list-group list-group-flush" id="dashboard-recent-tests">
+                {% for item in recent_tests %}
+                    <a
+                        class="list-group-item list-group-item-action"
+                        href="{% if item.status in active_test_statuses %}{% url 'tests:active' %}{% else %}{% url 'tests:detail' item.pk %}{% endif %}">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ item.test_no }}</strong>
+                            <span class="badge text-bg-primary">{{ item.status|test_status_label:ui_language }}</span>
+                        </div>
+                        <div class="small text-muted">{{ item.company.name }} / {{ item.product_model.model_name }}</div>
+                    </a>
+                {% empty %}
+                    <div class="list-group-item text-muted">{% ui_text 'common.no_records' %}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">{% ui_text 'dashboard.runtime' %}</div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for label, value in status_meta %}
+                                <li class="list-group-item d-flex justify-content-between" data-status-meta="{{ label }}">
+                                    <span>{{ label }}</span>
+                                    <strong class="status-meta-value">{{ value }}</strong>
+                                </li>
+                            {% endfor %}
+                            <li class="list-group-item d-flex justify-content-between" data-status-meta="{% ui_text 'dashboard.data_age' %}">
+                                <span>{% ui_text 'dashboard.data_age' %}</span>
+                                <strong class="status-meta-value">{% if data_age_seconds is not None %}{{ data_age_seconds }}{% else %}{% ui_text 'common.not_available' %}{% endif %}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">{% ui_text 'dashboard.live_flags' %}</div>
+                    <div class="card-body" id="dashboard-live-flags">
+                        {% if live_status_flags %}
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for key, value in live_status_flags %}
+                                    <span class="badge {% if value %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ key }}: {{ value }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-danger fw-semibold">{% ui_text 'dashboard.no_flags' %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">{% ui_text 'dashboard.live_meta' %}</div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for label, value in live_meta %}
+                                <li class="list-group-item d-flex justify-content-between" data-live-meta="{{ label }}">
+                                    <span>{{ label }}</span>
+                                    <strong class="live-meta-value">{{ value }}</strong>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

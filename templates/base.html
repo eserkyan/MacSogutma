@@ -1,0 +1,80 @@
+{% load static ui_i18n %}
+<!DOCTYPE html>
+<html lang="{{ ui_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% ui_text 'app.name' %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg app-navbar shadow-sm sticky-top">
+    <div class="container-xxl">
+        <a class="navbar-brand app-navbar-brand" href="{% url 'dashboard:index' %}">
+            <img src="{% static 'images/mac-logo.svg' %}" alt="MAC" class="app-navbar-logo">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="{% url 'dashboard:index' %}">{% ui_text 'nav.dashboard' %}</a>
+                <a class="nav-link" href="{% url 'tests:start' %}">{% ui_text 'nav.start_test' %}</a>
+                <a class="nav-link" href="{% url 'tests:active' %}">{% ui_text 'nav.active_test' %}</a>
+                <a class="nav-link" href="{% url 'tests:history' %}">{% ui_text 'nav.history' %}</a>
+                <a class="nav-link" href="{% url 'recipes:list' %}">{% ui_text 'nav.recipes' %}</a>
+                <a class="nav-link" href="{% url 'companies:list' %}">{% ui_text 'nav.companies' %}</a>
+                <a class="nav-link" href="{% url 'products:list' %}">{% ui_text 'nav.products' %}</a>
+                <a class="nav-link" href="{% url 'core:settings' %}">{% ui_text 'nav.settings' %}</a>
+            </div>
+            <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0 app-navbar-side">
+                <div class="app-partner-badge">
+                    <img src="{% static 'images/kianes-logo.png' %}" alt="KIANES" class="app-partner-badge-logo">
+                </div>
+                <form method="post" action="{% url 'core:set_language' %}" class="d-flex align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <select name="language" class="form-select form-select-sm lang-select">
+                        {% for code, label in ui_languages %}
+                            <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-primary btn-sm app-navbar-lang-btn" type="submit">OK</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+<main class="container-xxl py-4 app-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
+<footer class="app-footer mt-4">
+    <div class="container-xxl">
+        <div class="app-footer-inner">
+            <div class="app-footer-brand">
+                <img src="{% static 'images/kianes-logo.png' %}" alt="KIANES" class="app-footer-logo">
+                <div class="app-footer-text">
+                    <div class="app-footer-title">KIANES ELEKTRIK OTOMASYON ENSTRUMANTASYON SISTEMLERI</div>
+                    <div class="app-footer-subtitle">Automation and instrumentation partner for commissioning, PLC integration and field systems.</div>
+                </div>
+            </div>
+            <div class="app-footer-note">
+                <span>MAC HVAC Test Platform</span>
+                <span class="app-footer-separator">|</span>
+                <span>Powered with KIANES engineering support</span>
+            </div>
+        </div>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

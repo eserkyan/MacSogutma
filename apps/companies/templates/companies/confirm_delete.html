@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% ui_text 'companies.delete_title' %}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header">{% ui_text 'companies.delete_title' %}</div>
+    <div class="card-body">
+        <p><strong>{{ object.name }}</strong> {% ui_text 'companies.delete_confirm' %}</p>
+        <p class="text-muted">{% ui_text 'companies.delete_blocked' %}</p>
+        <form method="post">
+            {% csrf_token %}
+            <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary">{% ui_text 'common.cancel' %}</a>
+            <button type="submit" class="btn btn-danger">{% ui_text 'common.delete' %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

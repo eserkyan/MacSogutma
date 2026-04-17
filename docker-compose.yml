@@ -1,0 +1,62 @@
+services:
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ${HOST_MEDIA_PATH}:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    command: celery -A config worker -l info
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ${HOST_MEDIA_PATH}:/app/media
+    depends_on:
+      - db
+      - redis
+
+  beat:
+    build: .
+    command: celery -A config beat -l info
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ${HOST_MEDIA_PATH}:/app/media
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+  static_data:

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% ui_text 'recipes.title' %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+    <h1 class="h3 mb-0">{% ui_text 'recipes.title' %}</h1>
+    <a href="{% url 'recipes:create' %}" class="btn btn-primary">{% ui_text 'common.new_recipe' %}</a>
+</div>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>{% ui_text 'recipes.code' %}</th>
+                    <th>{% ui_text 'recipes.name' %}</th>
+                    <th>{% ui_text 'recipes.model' %}</th>
+                    <th>{% ui_text 'recipes.rev' %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for recipe in recipes %}
+                <tr>
+                    <td>{{ recipe.recipe_code }}</td>
+                    <td>{{ recipe.recipe_name }}</td>
+                    <td>{{ recipe.product_model }}</td>
+                    <td>{{ recipe.revision_no }}</td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'recipes:update' recipe.pk %}" class="btn btn-outline-secondary btn-sm">{% ui_text 'common.edit' %}</a>
+                        <a href="{% url 'recipes:delete' recipe.pk %}" class="btn btn-outline-danger btn-sm">{% ui_text 'common.delete' %}</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-muted">{% ui_text 'recipes.none' %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

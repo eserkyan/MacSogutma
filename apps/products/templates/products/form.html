@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% ui_text 'products.form_title' %}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header">{% ui_text 'products.form_title' %}</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-grid">
+                {% include "includes/form_fields.html" with form=form %}
+            </div>
+            <button class="btn btn-primary">{% ui_text 'common.save' %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

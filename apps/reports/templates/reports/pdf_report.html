@@ -1,0 +1,241 @@
+{% load ui_i18n ui_datetime %}
+<!DOCTYPE html>
+<html lang="{{ report.language }}">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 16mm; }
+        body { font-family: sans-serif; font-size: 10px; color: #1f2937; }
+        h1, h2, h3 { margin: 0 0 8px; }
+        h1 { font-size: 20px; }
+        h2 { font-size: 14px; margin-top: 18px; }
+        h3 { font-size: 12px; margin-top: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 14px; table-layout: fixed; }
+        th, td { border: 1px solid #d1d5db; padding: 5px 6px; vertical-align: top; word-wrap: break-word; }
+        th { background: #eef2f7; text-align: left; }
+        .muted { color: #6b7280; }
+        .note { padding: 10px; background: #eff6ff; border: 1px solid #bfdbfe; margin-bottom: 14px; }
+        .pass { color: #166534; font-weight: 700; }
+        .fail { color: #b91c1c; font-weight: 700; }
+        .status-chip { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: 0.02em; }
+        .status-chip-pass { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-chip-fail { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .status-chip-na { background: #e5e7eb; color: #4b5563; border: 1px solid #cbd5e1; }
+        .result-banner { padding: 10px 14px; border-radius: 12px; font-size: 16px; font-weight: 800; display: inline-block; min-width: 180px; text-align: center; }
+        .result-banner.pass { background: #dcfce7; border: 1px solid #86efac; }
+        .result-banner.fail { background: #fee2e2; border: 1px solid #fca5a5; }
+        .path-note { margin-top: 6px; font-size: 9px; color: #64748b; word-break: break-all; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .section { page-break-inside: avoid; }
+        .chart-box { border: 1px solid #d1d5db; padding: 8px; margin-bottom: 12px; }
+        .chart-box svg { width: 100%; height: auto; display: block; }
+        .report-header { display: table; width: 100%; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #dbe7f6; }
+        .report-header-left, .report-header-center, .report-header-right { display: table-cell; vertical-align: middle; }
+        .report-header-left { width: 24%; }
+        .report-header-center { width: 52%; text-align: center; }
+        .report-header-right { width: 24%; text-align: right; }
+        .report-header-title { font-size: 20px; font-weight: 700; color: #183153; margin-bottom: 4px; }
+        .report-header-subtitle { font-size: 10px; color: #5b6b7f; }
+        .report-logo-mac { width: 150px; max-width: 150px; height: 42px; }
+        .report-logo-mac svg { width: 100%; height: 100%; display: block; }
+        .report-logo-kianes { width: 120px; max-width: 120px; max-height: 46px; display: inline-block; }
+        .report-badge { display: inline-block; margin-top: 4px; padding: 3px 8px; border: 1px solid #c7d7ef; border-radius: 999px; background: #eef4fb; color: #2f56a3; font-size: 9px; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <div class="report-header-left">
+            <div class="report-logo-mac">{{ mac_logo_svg }}</div>
+        </div>
+        <div class="report-header-center">
+            <div class="report-header-title">{{ report.labels.report_title }}</div>
+            <div class="report-header-subtitle">{{ report.labels.report_subtitle }}</div>
+            <div class="report-badge">{{ report.labels.generated_at }}: {{ generated_at|ui_datetime:report.language }}</div>
+        </div>
+        <div class="report-header-right">
+            <img src="{{ kianes_logo_uri }}" alt="KIANES" class="report-logo-kianes">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>{{ report.labels.test_general_info }}</h2>
+        <table>
+            <tr><th>{{ report.labels.test_no }}</th><td>{{ test_record.test_no }}</td><th>{{ report.labels.status }}</th><td>{{ report.test_status_label }}</td></tr>
+            <tr><th>{{ report.labels.company }}</th><td>{{ test_record.company.name }}</td><th>{{ report.labels.model }}</th><td>{{ test_record.product_model.model_name }}</td></tr>
+            <tr><th>{{ report.labels.recipe }}</th><td>{{ test_record.recipe_name_snapshot }}</td><th>{{ report.labels.circuit }}</th><td>{{ test_record.selected_circuit }}</td></tr>
+            <tr><th>{{ report.labels.operator }}</th><td>{{ test_record.operator_name }}</td><th>{{ report.labels.revision }}</th><td>{{ test_record.recipe_revision_snapshot }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>{{ report.labels.phase_durations }}</h2>
+        <table>
+            <tr><th>{{ report.labels.start }}</th><td>{{ test_record.start_duration_sec_snapshot }} {{ report.labels.sec }}</td></tr>
+            <tr><th>{{ report.labels.stable }}</th><td>{{ test_record.stable_duration_sec_snapshot }} {{ report.labels.sec }}</td></tr>
+            <tr><th>{{ report.labels.stop }}</th><td>{{ test_record.stop_duration_sec_snapshot }} {{ report.labels.sec }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>{{ report.labels.recipe_info }}</h2>
+        <table>
+            <tr><th>{{ report.labels.recipe_code }}</th><td>{{ test_record.recipe_code_snapshot }}</td><th>{{ report.labels.revision }}</th><td>{{ test_record.recipe_revision_snapshot }}</td></tr>
+            <tr><th>{{ report.labels.notes }}</th><td colspan="3">{{ test_record.notes|default:"-" }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>{{ report.labels.general_result }}</h2>
+        <p class="result-banner {{ report.overall_result_class }}">{{ report.overall_result_label }}</p>
+        {% if test_record.pdf_file_path %}
+            <div class="path-note">PDF: {{ test_record.pdf_file_path }}</div>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>{{ report.labels.stable_eval|default:"Stable Evaluation" }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ report.labels.parameter }}</th>
+                    <th>{{ report.labels.unit }}</th>
+                    <th>{{ report.labels.measured_min }}</th>
+                    <th>AVG</th>
+                    <th>{{ report.labels.measured_max }}</th>
+                    <th>{{ report.labels.limit_min }}</th>
+                    <th>{{ report.labels.limit_max }}</th>
+                    <th>{{ report.labels.status }}</th>
+                    <th>{{ report.labels.message }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report.evaluation_rows %}
+                    <tr>
+                        <td>{{ row.parameter_name }}</td>
+                        <td>{{ row.unit }}</td>
+                        <td>{% if row.measured_min is not None %}{{ row.measured_min|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.avg_value is not None %}{{ row.avg_value|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.measured_max is not None %}{{ row.measured_max|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.limit_min is not None %}{{ row.limit_min|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.limit_max is not None %}{{ row.limit_max|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if row.passed is None %}
+                                <span class="status-chip status-chip-na">{{ report.labels.status_na }}</span>
+                            {% elif row.passed %}
+                                <span class="status-chip status-chip-pass">{{ report.labels.status_pass }}</span>
+                            {% else %}
+                                <span class="status-chip status-chip-fail">{{ report.labels.status_fail }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.message }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% for section in report.phase_stat_sections %}
+    <div class="section">
+        <h2>{{ section.title }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ report.labels.parameter }}</th>
+                    <th>{{ report.labels.unit }}</th>
+                    <th>{{ report.labels.measured_min }}</th>
+                    <th>AVG</th>
+                    <th>{{ report.labels.measured_max }}</th>
+                    <th>{{ report.labels.limit_min }}</th>
+                    <th>{{ report.labels.limit_max }}</th>
+                    <th>{{ report.labels.status }}</th>
+                    <th>{{ report.labels.message }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in section.rows %}
+                    <tr>
+                        <td>{{ row.parameter_name }}</td>
+                        <td>{{ row.unit }}</td>
+                        <td>{% if row.stats.min_value is not None %}{{ row.stats.min_value|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.stats.avg_value is not None %}{{ row.stats.avg_value|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.stats.max_value is not None %}{{ row.stats.max_value|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.min_enabled and row.min_limit is not None %}{{ row.min_limit|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{% if row.max_enabled and row.max_limit is not None %}{{ row.max_limit|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if row.passed is None %}
+                                <span class="status-chip status-chip-na">{{ report.labels.status_na }}</span>
+                            {% elif row.passed %}
+                                <span class="status-chip status-chip-pass">{{ report.labels.status_pass }}</span>
+                            {% else %}
+                                <span class="status-chip status-chip-fail">{{ report.labels.status_fail }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.message }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+    <div class="section">
+        <div class="note">
+            <p>{{ report.labels.traceability_line_1 }}</p>
+            <p>{{ report.labels.traceability_line_2 }}</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>{{ report.labels.limit_excursions }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ report.labels.parameter }}</th>
+                    <th>{{ report.labels.phase_name }}</th>
+                    <th>{{ report.labels.elapsed_time }}</th>
+                    <th>{{ report.labels.measured_value }}</th>
+                    <th>{{ report.labels.limit_type }}</th>
+                    <th>{{ report.labels.limit_value }}</th>
+                    <th>{{ report.labels.message }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report.limit_rows %}
+                    <tr>
+                        <td>{{ row.parameter_name }}</td>
+                        <td>{{ row.phase_name }}</td>
+                        <td>{{ row.elapsed_seconds|floatformat:2 }} {{ report.labels.sec }}</td>
+                        <td>{{ row.sample_value|floatformat:2 }} {{ row.unit }}</td>
+                        <td>{{ row.limit_type }}</td>
+                        <td>{{ row.limit_value|floatformat:2 }} {{ row.unit }}</td>
+                        <td>{{ row.message }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7">{{ report.labels.no_limit_excursion|default:"No limit excursion records were found." }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% for section in report.chart_sections %}
+    <div class="section">
+        <h2>{{ section.title }}</h2>
+        {% for chart in section.charts %}
+            <div class="chart-box">
+                <h3>{{ chart.title }}</h3>
+                <img src="{{ chart.svg_data_uri }}" alt="{{ chart.title }}">
+            </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% if test_record.abort_reason %}
+        <div class="section">
+            <h2>{{ report.labels.abort_info }}</h2>
+            <p>{{ test_record.abort_reason }}</p>
+        </div>
+    {% endif %}
+</body>
+</html>

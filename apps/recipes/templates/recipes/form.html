@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% ui_text 'recipes.title' %}{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">{% ui_text 'recipes.info' %}</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        {% include "includes/form_fields.html" with fields=form.general_fields %}
+                    </div>
+                    <div class="card border-0 bg-light-subtle mt-4">
+                        <div class="card-header bg-transparent border-0 px-0 pt-0">
+                            <h5 class="mb-1">{% ui_text 'recipes.limits_title' %}</h5>
+                            <p class="text-muted small mb-0">{% ui_text 'recipes.limits_help' %}</p>
+                        </div>
+                        <div class="card-body px-0 pb-0">
+                            <div class="table-responsive">
+                                <table class="table align-middle recipe-limits-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2">{% ui_text 'common.parameter' %}</th>
+                                            <th rowspan="2">{% ui_text 'common.unit' %}</th>
+                                            <th colspan="4" class="text-center">{% ui_text 'tests.phase_start' %}</th>
+                                            <th colspan="4" class="text-center">{% ui_text 'tests.phase_stable' %}</th>
+                                            <th colspan="4" class="text-center">{% ui_text 'tests.phase_stop' %}</th>
+                                        </tr>
+                                        <tr>
+                                            {% for _phase in "123" %}
+                                                <th>{% ui_text 'common.min_enabled' %}</th>
+                                                <th>{% ui_text 'common.min_value' %}</th>
+                                                <th>{% ui_text 'common.max_enabled' %}</th>
+                                                <th>{% ui_text 'common.max_value' %}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in form.limit_rows %}
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold">{{ row.label }}</div>
+                                                    <div class="text-muted small">ID: {{ row.code }}</div>
+                                                </td>
+                                                <td><span class="badge text-bg-light">{{ row.unit }}</span></td>
+                                                {% for phase_slug, phase_fields in row.phases.items %}
+                                                    <td class="text-center">{{ phase_fields.min_enabled }}</td>
+                                                    <td>
+                                                        {{ phase_fields.min_value }}
+                                                        {% for error in phase_fields.min_value.errors %}
+                                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td class="text-center">{{ phase_fields.max_enabled }}</td>
+                                                    <td>
+                                                        {{ phase_fields.max_value }}
+                                                        {% for error in phase_fields.max_value.errors %}
+                                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                                        {% endfor %}
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">{% ui_text 'common.save' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".limit-toggle").forEach((toggle) => {
+        const applyState = () => {
+            const targetId = toggle.dataset.target;
+            if (!targetId) {
+                return;
+            }
+            const input = document.getElementById(targetId);
+            if (!input) {
+                return;
+            }
+            input.disabled = !toggle.checked;
+            input.classList.toggle("limit-input-disabled", !toggle.checked);
+            if (!toggle.checked) {
+                input.value = "";
+            }
+        };
+        toggle.addEventListener("change", applyState);
+        applyState();
+    });
+});
+</script>
+{% endblock %}
